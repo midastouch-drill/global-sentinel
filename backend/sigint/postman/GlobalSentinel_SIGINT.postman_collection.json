@@ -1,0 +1,115 @@
+
+{
+  "info": {
+    "name": "Global Sentinel SIGINT",
+    "description": "Signal Intelligence Web Scraper Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "sigint_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "core_url", 
+      "value": "https://global-sentinel-core.onrender.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{sigint_url}}/health",
+          "host": ["{{sigint_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Test RSS Scraping",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{sigint_url}}/test-scrape/rss",
+          "host": ["{{sigint_url}}"],
+          "path": ["test-scrape", "rss"]
+        }
+      }
+    },
+    {
+      "name": "Test API Scraping",
+      "request": {
+        "method": "GET", 
+        "header": [],
+        "url": {
+          "raw": "{{sigint_url}}/test-scrape/api",
+          "host": ["{{sigint_url}}"],
+          "path": ["test-scrape", "api"]
+        }
+      }
+    },
+    {
+      "name": "Test HTML Scraping",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{sigint_url}}/test-scrape/html", 
+          "host": ["{{sigint_url}}"],
+          "path": ["test-scrape", "html"]
+        }
+      }
+    },
+    {
+      "name": "Test Reddit Scraping",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{sigint_url}}/test-scrape/reddit",
+          "host": ["{{sigint_url}}"],
+          "path": ["test-scrape", "reddit"]
+        }
+      }
+    },
+    {
+      "name": "Test All Scrapers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{sigint_url}}/test-scrape/all",
+          "host": ["{{sigint_url}}"],
+          "path": ["test-scrape", "all"]
+        }
+      }
+    },
+    {
+      "name": "Forward Test Payload",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"threats\": [\n    {\n      \"title\": \"Test Threat - Cyber Attack on Infrastructure\",\n      \"summary\": \"Simulated cyber attack detected on critical infrastructure systems\",\n      \"type\": \"Cyber\",\n      \"severity\": 75,\n      \"source\": \"SIGINT Test\",\n      \"url\": \"https://example.com/test\",\n      \"timestamp\": \"2025-05-25T19:03:00Z\",\n      \"rawData\": {\n        \"scraper\": \"test\"\n      }\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{sigint_url}}/test-scrape/forward-to-detect",
+          "host": ["{{sigint_url}}"],
+          "path": ["test-scrape", "forward-to-detect"]
+        }
+      }
+    }
+  ]
+}
