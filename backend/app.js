@@ -9,6 +9,9 @@ require('dotenv').config();
 // Import Firebase test function
 const { testFirebaseConnection } = require('./config/firebase');
 
+// Import authentication middleware
+const { verifyFirebaseToken, optionalAuth } = require('./middleware/authMiddleware');
+
 // Import routes
 const detectionRoutes = require('./routes/detection');
 const simulateRoutes = require('./routes/simulate');
@@ -64,7 +67,12 @@ app.get('/health/firebase', async (req, res) => {
       service: 'firebase',
       status: firebaseHealthy ? 'healthy' : 'unavailable',
       timestamp: new Date().toISOString(),
-      message: firebaseHealthy ? 'Firebase connection successful' : 'Firebase connection failed'
+      message: firebaseHealthy ? 'Firebase connection successful' : 'Firebase connection failed',
+      config: {
+        projectId: process.env.FIREBASE_PROJECT_ID || 'not-set',
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL ? 'configured' : 'missing',
+        privateKey: process.env.FIREBASE_PRIVATE_KEY ? 'configured' : 'missing'
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -76,12 +84,14 @@ app.get('/health/firebase', async (req, res) => {
   }
 });
 
-// API routes
-app.use('/api/detect', detectionRoutes);
-app.use('/api/simulate', simulateRoutes);
-app.use('/api/verify', verifyRoutes);
-app.use('/api/vote', voteRoutes);
-app.use('/api/trends', trendsRoutes);
+// Public routes (no authentication required)
+app.use('/api/trends', optionalAuth, trendsRoutes);
+
+// Protected routes (authentication required)
+app.use('/api/detect', verifyFirebaseToken, detectionRoutes);
+app.use('/api/simulate', verifyFirebaseToken, simulateRoutes);
+app.use('/api/verify', verifyFirebaseToken, verifyRoutes);
+app.use('/api/vote', verifyFirebaseToken, voteRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -101,6 +111,14 @@ app.use((err, req, res, next) => {
       error: 'Firebase Service Unavailable',
       message: 'Firebase configuration error - check environment variables',
       details: err.message
+    });
+  }
+  
+  // Handle authentication errors
+  if (err.message.includes('auth') || err.message.includes('token')) {
+    return res.status(401).json({
+      error: 'Authentication Failed',
+      message: 'Invalid or expired authentication token'
     });
   }
   

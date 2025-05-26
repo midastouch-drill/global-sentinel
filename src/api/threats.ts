@@ -1,55 +1,21 @@
 
-import axios from 'axios';
+import { authClient } from './authClient';
 
-const CORE_API_URL = 'http://localhost:5000';
-const SIGINT_API_URL = 'http://localhost:4000';
-
-const coreApi = axios.create({
-  baseURL: CORE_API_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-const sigintApiClient = axios.create({
-  baseURL: SIGINT_API_URL,
-  timeout: 15000,
-});
-
-// Core API endpoints
 export const threatsApi = {
-  getAll: () => coreApi.get('/threats'),
-  getById: (id: string) => coreApi.get(`/threats/${id}`),
-  detect: (data: any) => coreApi.post('/detect', data),
-  vote: (data: any) => coreApi.post('/vote', data),
-  verify: (data: any) => coreApi.post('/verify', data),
-  getTrends: () => coreApi.get('/trends'),
-  simulate: (data: any) => coreApi.post('/simulate', data),
-  getSimulations: () => coreApi.get('/simulations'),
+  getAll: () => authClient.get('/api/detect/active'),
+  getById: (id: string) => authClient.get(`/api/threats/${id}`),
+  getTrends: () => authClient.get('/api/trends'),
+  vote: (data: { threatId: string; vote: 'credible' | 'not_credible' }) => 
+    authClient.post('/api/vote', data),
+  verify: (data: { threatId: string; sources: string[]; credibilityScore: number }) => 
+    authClient.post('/api/verify', data),
+  simulate: (data: { scenario: string; parameters: any }) => 
+    authClient.post('/api/simulate', data),
 };
 
-// SIGINT API endpoints
 export const sigintApi = {
-  testRssScrape: () => sigintApiClient.get('/test-scrape/rss'),
-  testApiScrape: () => sigintApiClient.get('/test-scrape/api'),
-  testHtmlScrape: () => sigintApiClient.get('/test-scrape/html'),
-  testRedditScrape: () => sigintApiClient.get('/test-scrape/reddit'),
+  testRssScrape: () => authClient.post('/api/sigint/test-rss'),
+  testApiScrape: () => authClient.post('/api/sigint/test-api'),
+  testHtmlScrape: () => authClient.post('/api/sigint/test-html'),
+  testRedditScrape: () => authClient.post('/api/sigint/test-reddit'),
 };
-
-// Error handling
-coreApi.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('Core API Error:', error);
-    return Promise.reject(error);
-  }
-);
-
-sigintApiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('SIGINT API Error:', error);
-    return Promise.reject(error);
-  }
-);
