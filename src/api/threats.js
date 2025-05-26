@@ -12,7 +12,7 @@ const coreApi = axios.create({
   },
 });
 
-const sigintApi = axios.create({
+const sigintApiClient = axios.create({
   baseURL: SIGINT_API_URL,
   timeout: 15000,
 });
@@ -31,10 +31,10 @@ export const threatsApi = {
 
 // SIGINT API endpoints
 export const sigintApi = {
-  testRssScrape: () => sigintApi.get('/test-scrape/rss'),
-  testApiScrape: () => sigintApi.get('/test-scrape/api'),
-  testHtmlScrape: () => sigintApi.get('/test-scrape/html'),
-  testRedditScrape: () => sigintApi.get('/test-scrape/reddit'),
+  testRssScrape: () => sigintApiClient.get('/test-scrape/rss'),
+  testApiScrape: () => sigintApiClient.get('/test-scrape/api'),
+  testHtmlScrape: () => sigintApiClient.get('/test-scrape/html'),
+  testRedditScrape: () => sigintApiClient.get('/test-scrape/reddit'),
 };
 
 // Error handling
@@ -46,7 +46,7 @@ coreApi.interceptors.response.use(
   }
 );
 
-sigintApi.interceptors.response.use(
+sigintApiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('SIGINT API Error:', error);
