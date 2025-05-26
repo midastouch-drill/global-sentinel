@@ -1,4 +1,3 @@
-
 {
   "name": "global-sentinel-sigint",
   "version": "1.0.0",
@@ -9,7 +8,12 @@
     "dev": "nodemon server.js",
     "test": "node test/testScrapers.js"
   },
-  "keywords": ["scraping", "threat-intelligence", "global-sentinel", "crisis-monitoring"],
+  "keywords": [
+    "scraping",
+    "threat-intelligence",
+    "global-sentinel",
+    "crisis-monitoring"
+  ],
   "author": "Global Sentinel Team",
   "license": "MIT",
   "dependencies": {
