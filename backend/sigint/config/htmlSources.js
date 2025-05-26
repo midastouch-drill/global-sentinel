@@ -13,14 +13,14 @@ module.exports = {
     priority: 'critical'
   },
   cdc: {
-    name: 'CDC Emergency Preparedness',
-    url: 'https://www.cdc.gov/phpr/whatsnew.htm',
+    name: 'CDC Health Topics',
+    url: 'https://www.cdc.gov/az/index.html',
     category: 'Health',
     selectors: {
-      title: '.list-item-title a',
-      summary: '.list-item-description',
-      date: '.list-item-date',
-      link: '.list-item-title a'
+      title: '.topic-name a',
+      summary: '.topic-name a',
+      date: '',
+      link: '.topic-name a'
     },
     priority: 'high'
   },
