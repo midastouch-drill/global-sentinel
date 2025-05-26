@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
-import { ThreatCard } from './ThreatCard';
+import ThreatCard from './ThreatCard';
 import { ThreatChart } from './ThreatChart';
 import { ThreatFeed } from './ThreatFeed';
-import { SimulationModal } from './SimulationModal';
+import SimulationModal from './SimulationModal';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertTriangle, Brain, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
