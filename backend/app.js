@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+// Import Firebase test function
+const { testFirebaseConnection } = require('./config/firebase');
+
 // Import routes
 const detectionRoutes = require('./routes/detection');
 const simulateRoutes = require('./routes/simulate');
@@ -36,14 +39,41 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+// Health check endpoint with Firebase status
+app.get('/health', async (req, res) => {
+  const firebaseHealthy = await testFirebaseConnection();
+  
   res.json({
     status: 'active',
     message: '🌍 Global Sentinel operational',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    services: {
+      firebase: firebaseHealthy ? 'healthy' : 'unavailable',
+      api: 'healthy'
+    }
   });
+});
+
+// Firebase-specific health check
+app.get('/health/firebase', async (req, res) => {
+  try {
+    const firebaseHealthy = await testFirebaseConnection();
+    
+    res.json({
+      service: 'firebase',
+      status: firebaseHealthy ? 'healthy' : 'unavailable',
+      timestamp: new Date().toISOString(),
+      message: firebaseHealthy ? 'Firebase connection successful' : 'Firebase connection failed'
+    });
+  } catch (error) {
+    res.status(500).json({
+      service: 'firebase',
+      status: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // API routes
@@ -64,6 +94,16 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('🚨 Global Sentinel Error:', err);
+  
+  // Handle Firebase-specific errors
+  if (err.message.includes('Firebase') || err.message.includes('project_id')) {
+    return res.status(503).json({
+      error: 'Firebase Service Unavailable',
+      message: 'Firebase configuration error - check environment variables',
+      details: err.message
+    });
+  }
+  
   res.status(500).json({
     error: 'Internal Server Error',
     message: 'Critical system failure detected'

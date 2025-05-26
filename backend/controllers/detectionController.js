@@ -1,5 +1,4 @@
-
-const { getFirestore } = require('../config/firebase');
+const { getFirestore, testFirebaseConnection } = require('../config/firebase');
 const openRouterClient = require('../utils/openRouterClient');
 const SonarPromptBuilder = require('../utils/sonarPromptBuilder');
 const ChaosIndexCalculator = require('../utils/chaosIndexCalculator');
@@ -9,6 +8,13 @@ class DetectionController {
   static async detectThreats(req, res) {
     try {
       console.log('🔍 Initiating global threat detection scan...');
+      
+      // Test Firebase connection first
+      const firebaseHealthy = await testFirebaseConnection();
+      if (!firebaseHealthy) {
+        console.error('🚨 Firebase connection failed - using fallback mode');
+        return DetectionController.handleFirebaseFailure(res);
+      }
       
       const db = getFirestore();
       const prompt = SonarPromptBuilder.buildThreatDetectionPrompt();
@@ -29,14 +35,19 @@ class DetectionController {
         votes: { confirm: 0, deny: 0, skeptical: 0 }
       }));
       
-      // Store in Firestore
-      const batch = db.batch();
-      processedThreats.forEach(threat => {
-        const threatRef = db.collection('threats').doc(threat.id);
-        batch.set(threatRef, threat);
-      });
-      
-      await batch.commit();
+      // Store in Firestore with error handling
+      try {
+        const batch = db.batch();
+        processedThreats.forEach(threat => {
+          const threatRef = db.collection('threats').doc(threat.id);
+          batch.set(threatRef, threat);
+        });
+        
+        await batch.commit();
+        console.log('✅ Threats stored in Firestore successfully');
+      } catch (firestoreError) {
+        console.warn('⚠️ Firestore write failed, continuing with in-memory data:', firestoreError.message);
+      }
       
       // Calculate current chaos index
       const chaosIndex = ChaosIndexCalculator.calculateGlobalChaosIndex(processedThreats);
@@ -48,17 +59,42 @@ class DetectionController {
         threats: processedThreats,
         chaosIndex,
         timestamp: new Date().toISOString(),
-        message: `Global threat scan complete - ${processedThreats.length} active threats detected`
+        message: `Global threat scan complete - ${processedThreats.length} active threats detected`,
+        firebaseHealthy
       });
       
     } catch (error) {
       console.error('🚨 Threat detection error:', error);
+      
+      // Check if it's a Firebase-specific error
+      if (error.message.includes('Firebase') || error.message.includes('project_id')) {
+        return DetectionController.handleFirebaseFailure(res, error);
+      }
+      
       res.status(500).json({
         success: false,
         error: 'Threat detection system failure',
-        message: error.message
+        message: error.message,
+        firebaseHealthy: false
       });
     }
+  }
+
+  static async handleFirebaseFailure(res, error = null) {
+    console.log('🔄 Running in fallback mode without Firebase...');
+    
+    const fallbackThreats = DetectionController.generateFallbackThreats();
+    const chaosIndex = ChaosIndexCalculator.calculateGlobalChaosIndex(fallbackThreats);
+    
+    return res.json({
+      success: true,
+      threats: fallbackThreats,
+      chaosIndex,
+      timestamp: new Date().toISOString(),
+      message: 'Threat detection running in fallback mode - Firebase unavailable',
+      firebaseHealthy: false,
+      firebaseError: error?.message || 'Firebase connection failed'
+    });
   }
 
   static async parseThreats(aiResponse) {
@@ -108,26 +144,50 @@ class DetectionController {
   static generateFallbackThreats() {
     return [
       {
+        id: uuidv4(),
         title: "AI-powered disinformation campaigns targeting elections",
         type: "Cyber",
         severity: 78,
         summary: "Sophisticated deepfake and AI-generated content spreading across social platforms",
         regions: ["North America", "Europe"],
-        sources: ["reuters.com", "bbc.com"]
+        sources: ["reuters.com", "bbc.com"],
+        timestamp: new Date().toISOString(),
+        status: 'active',
+        votes: { confirm: 0, deny: 0, skeptical: 0 }
       },
       {
+        id: uuidv4(),
         title: "Climate-induced migration crisis building in Central Asia",
         type: "Climate", 
         severity: 71,
         summary: "Unprecedented drought conditions forcing population displacement",
         regions: ["Central Asia"],
-        sources: ["un.org", "who.int"]
+        sources: ["un.org", "who.int"],
+        timestamp: new Date().toISOString(),
+        status: 'active',
+        votes: { confirm: 0, deny: 0, skeptical: 0 }
       }
     ];
   }
 
   static async getActiveThreats(req, res) {
     try {
+      // Test Firebase connection first
+      const firebaseHealthy = await testFirebaseConnection();
+      if (!firebaseHealthy) {
+        console.warn('⚠️ Firebase unavailable, returning fallback threats');
+        const fallbackThreats = DetectionController.generateFallbackThreats();
+        const chaosIndex = ChaosIndexCalculator.calculateGlobalChaosIndex(fallbackThreats);
+        
+        return res.json({
+          success: true,
+          threats: fallbackThreats,
+          chaosIndex,
+          count: fallbackThreats.length,
+          firebaseHealthy: false
+        });
+      }
+
       const db = getFirestore();
       const threatsRef = db.collection('threats');
       
@@ -148,14 +208,16 @@ class DetectionController {
         success: true,
         threats,
         chaosIndex,
-        count: threats.length
+        count: threats.length,
+        firebaseHealthy: true
       });
       
     } catch (error) {
       console.error('🚨 Active threats fetch error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch active threats'
+        error: 'Failed to fetch active threats',
+        firebaseHealthy: false
       });
     }
   }
