@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { ThreatDashboard } from '@/components/ThreatDashboard';
 import { CrisisSimulator } from '@/components/CrisisSimulator';
@@ -21,8 +21,8 @@ const Index = () => {
   useEffect(() => {
     // Calculate real-time chaos index based on active threats
     if (threats.length > 0) {
-      const avgSeverity = threats.reduce((sum, threat) => sum + threat.severity, 0) / threats.length;
-      const criticalCount = threats.filter(t => t.severity >= 80).length;
+      const avgSeverity = threats.reduce((sum: number, threat: any) => sum + threat.severity, 0) / threats.length;
+      const criticalCount = threats.filter((t: any) => t.severity >= 80).length;
       const weightedIndex = avgSeverity + (criticalCount * 5); // Boost for critical threats
       setChaosIndex(Math.min(100, weightedIndex));
     } else {
