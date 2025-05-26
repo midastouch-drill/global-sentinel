@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +16,10 @@ interface Threat {
   timestamp: string;
   source: string;
   region?: string;
+  regions?: string[];
+  sources?: string[];
+  status?: string;
+  votes?: { confirm: number; deny: number; skeptical: number };
 }
 
 interface ThreatFeedProps {

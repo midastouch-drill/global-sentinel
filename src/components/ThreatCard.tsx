@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,15 +13,17 @@ interface ThreatCardProps {
     type: string;
     severity: number;
     summary: string;
-    regions: string[];
-    sources: string[];
+    regions?: string[];
+    sources?: string[];
     timestamp: string;
-    status: string;
-    votes: { confirm: number; deny: number; skeptical: number };
+    status?: string;
+    votes?: { confirm: number; deny: number; skeptical: number };
   };
+  priority?: 'critical' | 'normal';
+  onSimulate?: () => void;
 }
 
-const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
+const ThreatCard: React.FC<ThreatCardProps> = ({ threat, priority, onSimulate }) => {
   const voteMutation = useVoteThreat();
   const verifyMutation = useVerifyThreat();
 
@@ -40,7 +43,7 @@ const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
   };
 
   return (
-    <Card className="w-[380px] shadow-md">
+    <Card className={`w-[380px] shadow-md ${priority === 'critical' ? 'border-red-500/50' : ''}`}>
       <CardHeader>
         <CardTitle>{threat.title}</CardTitle>
         <CardDescription>{threat.summary}</CardDescription>
@@ -51,12 +54,16 @@ const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
             <Badge variant="secondary">{threat.type}</Badge>
             <Badge className="ml-2">Severity: {threat.severity}</Badge>
           </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            Regions: {threat.regions.join(', ')}
-          </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            Sources: {threat.sources.join(', ')}
-          </div>
+          {threat.regions && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              Regions: {threat.regions.join(', ')}
+            </div>
+          )}
+          {threat.sources && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              Sources: {threat.sources.join(', ')}
+            </div>
+          )}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
@@ -70,7 +77,12 @@ const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
             Not Credible
           </Button>
         </div>
-        <Button size="sm" onClick={handleVerify}>Verify</Button>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleVerify}>Verify</Button>
+          {onSimulate && (
+            <Button size="sm" onClick={onSimulate}>Simulate</Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

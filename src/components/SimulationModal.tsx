@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   AlertDialog,
@@ -8,7 +9,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,11 +16,13 @@ import { Label } from "@/components/ui/label"
 import { useSimulate } from '@/hooks/useThreats';
 
 interface SimulationModalProps {
-  children: React.ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
+  threat?: any;
 }
 
-const SimulationModal: React.FC<SimulationModalProps> = ({ children }) => {
-  const [scenario, setScenario] = useState('');
+const SimulationModal: React.FC<SimulationModalProps> = ({ isOpen, onClose, threat }) => {
+  const [scenario, setScenario] = useState(threat?.title || '');
   const [parameters, setParameters] = useState('');
   const simulateMutation = useSimulate();
 
@@ -30,13 +32,11 @@ const SimulationModal: React.FC<SimulationModalProps> = ({ children }) => {
       scenario: scenario,
       parameters: parameters
     });
+    onClose();
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        {children}
-      </AlertDialogTrigger>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Simulate Threat Scenario</AlertDialogTitle>
@@ -66,7 +66,7 @@ const SimulationModal: React.FC<SimulationModalProps> = ({ children }) => {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
             <AlertDialogAction type="submit">Simulate</AlertDialogAction>
           </AlertDialogFooter>
         </form>
