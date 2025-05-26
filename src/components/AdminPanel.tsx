@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,28 +28,28 @@ export const AdminPanel = () => {
       name: 'RSS Feeds',
       description: 'BBC, Reuters, Al Jazeera news feeds',
       icon: Globe,
-      action: triggerRssScrape,
+      action: () => triggerRssScrape(),
       sources: ['BBC World', 'Reuters', 'Al Jazeera', 'Associated Press']
     },
     {
       name: 'API Sources',
       description: 'GDELT, World Bank, WHO APIs',
       icon: Database,
-      action: triggerApiScrape,
+      action: () => triggerApiScrape(),
       sources: ['GDELT Events', 'World Bank Data', 'WHO Disease Outbreaks']
     },
     {
       name: 'HTML Scrapers',
       description: 'Government and institutional websites',
       icon: Activity,
-      action: triggerHtmlScrape,
+      action: () => triggerHtmlScrape(),
       sources: ['CDC Emergency', 'ECDC Threats', 'FEMA Alerts']
     },
     {
       name: 'Reddit Monitoring',
       description: 'Social media trend analysis',
       icon: Brain,
-      action: triggerRedditScrape,
+      action: () => triggerRedditScrape(),
       sources: ['r/worldnews', 'r/collapse', 'r/geopolitics', 'r/cybersecurity']
     }
   ];
