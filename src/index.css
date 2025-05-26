@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Leaflet CSS for maps */
+@import 'leaflet/dist/leaflet.css';
+
 @layer base {
   :root {
     --background: 220 13% 9%;
@@ -112,4 +115,59 @@
   .cyber-glow {
     @apply animate-pulse-glow;
   }
+
+  /* 3D Effect Enhancements */
+  .glass-morphism {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .hologram-effect {
+    background: linear-gradient(45deg, transparent 30%, rgba(0, 255, 255, 0.1) 50%, transparent 70%);
+    background-size: 200% 200%;
+    animation: hologram 3s ease-in-out infinite;
+  }
+
+  .data-stream {
+    background: linear-gradient(90deg, 
+      rgba(0, 255, 255, 0.1) 0%, 
+      rgba(0, 255, 255, 0.3) 50%, 
+      rgba(0, 255, 255, 0.1) 100%);
+    background-size: 200% 100%;
+    animation: data-flow 2s linear infinite;
+  }
+
+  /* Enhanced Leaflet map styles for cyberpunk theme */
+  .leaflet-container {
+    background: #0f172a !important;
+    font-family: 'Monaco', 'Consolas', monospace !important;
+  }
+
+  .leaflet-popup-content-wrapper {
+    background: rgba(0, 20, 40, 0.95) !important;
+    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+    border-radius: 8px !important;
+    color: #00ffff !important;
+  }
+
+  .leaflet-popup-tip {
+    background: rgba(0, 20, 40, 0.95) !important;
+    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  }
+}
+
+@keyframes hologram {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes data-flow {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
 }

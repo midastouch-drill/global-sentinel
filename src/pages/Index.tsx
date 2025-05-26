@@ -5,21 +5,30 @@ import { ThreatDashboard } from '@/components/ThreatDashboard';
 import { CrisisSimulator } from '@/components/CrisisSimulator';
 import { GlobalMap } from '@/components/GlobalMap';
 import { CitizenValidator } from '@/components/CitizenValidator';
+import { TrendsDashboard } from '@/components/TrendsDashboard';
+import { AdminPanel } from '@/components/AdminPanel';
 import { AlertSystem } from '@/components/AlertSystem';
 import { MatrixBackground } from '@/components/MatrixBackground';
+import { useThreats } from '../hooks/useThreats';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [chaosIndex, setChaosIndex] = useState(0);
+  
+  const { data: threatsResponse } = useThreats();
+  const threats = threatsResponse?.threats || [];
 
   useEffect(() => {
-    // Simulate real-time chaos index updates
-    const interval = setInterval(() => {
-      setChaosIndex(prev => Math.max(0, Math.min(100, prev + (Math.random() - 0.5) * 10)));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+    // Calculate real-time chaos index based on active threats
+    if (threats.length > 0) {
+      const avgSeverity = threats.reduce((sum, threat) => sum + threat.severity, 0) / threats.length;
+      const criticalCount = threats.filter(t => t.severity >= 80).length;
+      const weightedIndex = avgSeverity + (criticalCount * 5); // Boost for critical threats
+      setChaosIndex(Math.min(100, weightedIndex));
+    } else {
+      setChaosIndex(0);
+    }
+  }, [threats]);
 
   const renderActiveComponent = () => {
     switch (activeTab) {
@@ -28,9 +37,13 @@ const Index = () => {
       case 'simulator':
         return <CrisisSimulator />;
       case 'map':
-        return <GlobalMap />;
+        return <GlobalMap threats={threats} />;
       case 'validator':
         return <CitizenValidator />;
+      case 'trends':
+        return <TrendsDashboard />;
+      case 'admin':
+        return <AdminPanel />;
       default:
         return <ThreatDashboard />;
     }
@@ -40,7 +53,7 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <MatrixBackground />
       
-      {/* Scan line effect */}
+      {/* Enhanced scan line effect */}
       <div className="scan-line" />
       
       <div className="relative z-10">
@@ -48,6 +61,7 @@ const Index = () => {
           activeTab={activeTab} 
           setActiveTab={setActiveTab}
           chaosIndex={chaosIndex}
+          threatCount={threats.length}
         />
         
         <AlertSystem />

@@ -1,0 +1,287 @@
+
+{
+  "info": {
+    "name": "Global Sentinel API Collection",
+    "description": "Complete API testing collection for Global Sentinel Core and SIGINT backends",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "core_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "sigint_url", 
+      "value": "http://localhost:4000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Core Backend - Threat Detection",
+      "item": [
+        {
+          "name": "Get All Threats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/threats",
+              "host": ["{{core_url}}"],
+              "path": ["threats"]
+            },
+            "description": "Fetch all active threats from the database"
+          }
+        },
+        {
+          "name": "Get Threat by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/threats/{{threat_id}}",
+              "host": ["{{core_url}}"],
+              "path": ["threats", "{{threat_id}}"]
+            },
+            "description": "Get detailed information about a specific threat"
+          }
+        },
+        {
+          "name": "AI Threat Detection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Scan for emerging global cyber security threats\",\n  \"sources\": [\"news\", \"social\", \"government\"],\n  \"timeframe\": \"24h\"\n}"
+            },
+            "url": {
+              "raw": "{{core_url}}/detect",
+              "host": ["{{core_url}}"],
+              "path": ["detect"]
+            },
+            "description": "Trigger AI-powered threat detection using Sonar/GPT"
+          }
+        },
+        {
+          "name": "Vote on Threat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"threatId\": \"threat_001\",\n  \"vote\": \"confirm\",\n  \"userId\": \"user_123\",\n  \"userType\": \"citizen\"\n}"
+            },
+            "url": {
+              "raw": "{{core_url}}/vote",
+              "host": ["{{core_url}}"],
+              "path": ["vote"]
+            },
+            "description": "Submit community vote for threat validation (confirm/deny/skeptical)"
+          }
+        },
+        {
+          "name": "Verify Threat Claim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"threatId\": \"threat_001\",\n  \"claim\": \"Cyber attack on NATO infrastructure\",\n  \"description\": \"Reports indicate coordinated attacks on multiple NATO member state networks\"\n}"
+            },
+            "url": {
+              "raw": "{{core_url}}/verify",
+              "host": ["{{core_url}}"],
+              "path": ["verify"]
+            },
+            "description": "AI-powered fact checking and verification of threat claims"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Core Backend - Simulation & Analytics",
+      "item": [
+        {
+          "name": "Create Simulation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scenario\": \"What if major undersea internet cables between US and Europe are severed?\",\n  \"threatId\": \"threat_001\",\n  \"context\": \"Based on recent cyber threat intelligence\"\n}"
+            },
+            "url": {
+              "raw": "{{core_url}}/simulate",
+              "host": ["{{core_url}}"],
+              "path": ["simulate"]
+            },
+            "description": "Generate AI-powered future scenario simulation"
+          }
+        },
+        {
+          "name": "Get All Simulations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/simulations",
+              "host": ["{{core_url}}"],
+              "path": ["simulations"]
+            },
+            "description": "Fetch all generated simulations"
+          }
+        },
+        {
+          "name": "Get Trends & Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/trends",
+              "host": ["{{core_url}}"],
+              "path": ["trends"]
+            },
+            "description": "Get threat trends, chaos index, and analytics data"
+          }
+        }
+      ]
+    },
+    {
+      "name": "SIGINT Backend - Web Scrapers",
+      "item": [
+        {
+          "name": "Test RSS Scraper",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sigint_url}}/test-scrape/rss",
+              "host": ["{{sigint_url}}"],
+              "path": ["test-scrape", "rss"]
+            },
+            "description": "Manually trigger RSS feed scraping (BBC, Reuters, Al Jazeera)"
+          }
+        },
+        {
+          "name": "Test API Scraper",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sigint_url}}/test-scrape/api",
+              "host": ["{{sigint_url}}"],
+              "path": ["test-scrape", "api"]
+            },
+            "description": "Manually trigger API-based data collection (GDELT, World Bank, WHO)"
+          }
+        },
+        {
+          "name": "Test HTML Scraper",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sigint_url}}/test-scrape/html",
+              "host": ["{{sigint_url}}"],
+              "path": ["test-scrape", "html"]
+            },
+            "description": "Manually trigger HTML scraping (Government sites, CDC, ECDC)"
+          }
+        },
+        {
+          "name": "Test Reddit Scraper",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sigint_url}}/test-scrape/reddit",
+              "host": ["{{sigint_url}}"],
+              "path": ["test-scrape", "reddit"]
+            },
+            "description": "Manually trigger Reddit monitoring for social sentiment analysis"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "Core Backend Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/health",
+              "host": ["{{core_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if Core backend is running"
+          }
+        },
+        {
+          "name": "SIGINT Backend Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sigint_url}}/health",
+              "host": ["{{sigint_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if SIGINT backend is running"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sample Test Data",
+      "item": [
+        {
+          "name": "Post Sample Threat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Cyber Threat - NATO Infrastructure\",\n  \"summary\": \"Sample threat for testing frontend integration\",\n  \"type\": \"Cyber\",\n  \"severity\": 85,\n  \"source\": \"Manual Test\",\n  \"url\": \"https://example.com/test-threat\",\n  \"timestamp\": \"2025-05-26T12:00:00Z\",\n  \"region\": \"Europe\"\n}"
+            },
+            "url": {
+              "raw": "{{core_url}}/detect",
+              "host": ["{{core_url}}"],
+              "path": ["detect"]
+            },
+            "description": "Create a sample threat for testing the frontend"
+          }
+        }
+      ]
+    }
+  ]
+}
