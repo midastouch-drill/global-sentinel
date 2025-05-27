@@ -1,6 +1,7 @@
 
 const admin = require('firebase-admin');
 const { createLogger, format, transports } = require('winston');
+const { getFirebaseConfig } = require('./environment');
 
 // Production-grade logger configuration
 const logger = createLogger({
@@ -21,38 +22,31 @@ const logger = createLogger({
 
 let firestoreInstance = null;
 let firebaseInitialized = false;
+let isDemoMode = false;
 
 // Enhanced validation with production checks
 const validateFirebaseConfig = () => {
-  const requiredVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL'];
-  const missing = requiredVars.filter(varName => !process.env[varName]);
+  const config = getFirebaseConfig();
   
-  if (missing.length > 0) {
-    const error = new Error(`Missing required Firebase environment variables: ${missing.join(', ')}`);
-    logger.error(error.message, { missingVars: missing });
-    throw error;
+  if (config.isDemoMode) {
+    logger.warn('🚧 Running in demo mode - Firebase features will use mock data');
+    isDemoMode = true;
+    return config;
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
-
-  // Enhanced private key security checks
-  privateKey = privateKey.replace(/\\n/g, '\n');
-  
-  if (privateKey.length < 100) {
+  if (config.privateKey.length < 100) {
     const error = new Error('Private key appears too short - potential configuration error');
-    logger.error(error.message, { keyLength: privateKey.length });
+    logger.error(error.message, { keyLength: config.privateKey.length });
     throw error;
   }
 
   logger.info('Firebase environment variables validated', {
-    projectId: projectId,
-    clientEmail: clientEmail,
-    keyLength: privateKey.length
+    projectId: config.projectId,
+    clientEmail: config.clientEmail,
+    keyLength: config.privateKey.length
   });
 
-  return { projectId, privateKey, clientEmail };
+  return config;
 };
 
 // Production-ready initialization with retry logic
@@ -65,26 +59,32 @@ const initializeFirebase = (retryCount = 0) => {
 
     logger.info('Initializing Firebase Admin SDK...');
     
-    const { projectId, privateKey, clientEmail } = validateFirebaseConfig();
+    const config = validateFirebaseConfig();
+
+    if (isDemoMode) {
+      logger.info('Firebase initialized in demo mode');
+      firebaseInitialized = true;
+      return null; // Return null for demo mode
+    }
 
     const serviceAccount = {
-      projectId,
-      privateKey,
-      clientEmail,
+      projectId: config.projectId,
+      privateKey: config.privateKey,
+      clientEmail: config.clientEmail,
     };
 
     const firebaseConfig = {
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: `https://${projectId}-default-rtdb.firebaseio.com/`,
-      projectId,
-      storageBucket: `${projectId}.appspot.com`
+      databaseURL: `https://${config.projectId}-default-rtdb.firebaseio.com/`,
+      projectId: config.projectId,
+      storageBucket: `${config.projectId}.appspot.com`
     };
 
     const app = admin.initializeApp(firebaseConfig);
     firebaseInitialized = true;
     
     logger.info('Firebase Admin SDK initialized successfully', {
-      projectId,
+      projectId: config.projectId,
       databaseURL: firebaseConfig.databaseURL
     });
     
@@ -96,6 +96,12 @@ const initializeFirebase = (retryCount = 0) => {
       stack: error.stack,
       retryCount
     });
+
+    // In demo mode, don't retry
+    if (isDemoMode) {
+      logger.info('Continuing in demo mode...');
+      return null;
+    }
 
     if (retryCount < 3) {
       logger.info(`Retrying Firebase initialization (attempt ${retryCount + 1})`);
@@ -113,11 +119,33 @@ const initializeFirebase = (retryCount = 0) => {
 // Enhanced Firestore with single initialization
 const getFirestore = () => {
   try {
+    if (isDemoMode) {
+      // Return mock Firestore interface for demo mode
+      return {
+        collection: (name) => ({
+          doc: (id) => ({
+            get: () => Promise.resolve({ exists: false, data: () => null }),
+            set: (data) => Promise.resolve(),
+            update: (data) => Promise.resolve(),
+            delete: () => Promise.resolve()
+          }),
+          add: (data) => Promise.resolve({ id: 'mock_id' }),
+          where: () => ({ get: () => Promise.resolve({ docs: [] }) }),
+          orderBy: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }),
+          limit: () => ({ get: () => Promise.resolve({ docs: [] }) })
+        })
+      };
+    }
+
     if (firestoreInstance) {
       return firestoreInstance;
     }
 
     const firebase = initializeFirebase();
+    if (!firebase) {
+      throw new Error('Firebase not initialized');
+    }
+    
     firestoreInstance = firebase.firestore();
     
     // Only set settings once during initialization
@@ -142,6 +170,11 @@ const getFirestore = () => {
 // Production health check with metrics
 const testFirebaseConnection = async () => {
   try {
+    if (isDemoMode) {
+      logger.info('Firebase connection test skipped (demo mode)');
+      return true;
+    }
+
     logger.info('Testing Firebase Admin SDK connection...');
     
     const firebase = initializeFirebase();
@@ -183,5 +216,6 @@ module.exports = {
   getFirestore,
   testFirebaseConnection,
   admin,
-  logger
+  logger,
+  isDemoMode: () => isDemoMode
 };

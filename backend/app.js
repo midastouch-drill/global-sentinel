@@ -1,11 +1,17 @@
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { initializeFirebase } = require('./config/firebase'); // Changed from initializeApp to initializeFirebase
+const { initializeFirebase } = require('./config/firebase');
 
-// Initialize Firebase
-initializeFirebase();
+// Initialize Firebase (will handle missing env vars gracefully)
+try {
+  initializeFirebase();
+  console.log('🔥 Firebase initialization completed');
+} catch (error) {
+  console.warn('⚠️  Firebase initialization failed, continuing in demo mode:', error.message);
+}
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -46,13 +52,32 @@ app.use('/api/vote', voteRoutes);
 app.use('/api/simulate', simulationRoutes);
 app.use('/api/verify', verifyRoutes);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
 });
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`🌍 Global Sentinel Backend running on port ${port}`);
+  console.log('🚀 Earth\'s AI Immune System is ACTIVE');
+  console.log('📡 Monitoring global threats in real-time...');
+  console.log(`🌐 Frontend URL: http://localhost:8080`);
+  console.log('💡 Create a .env file with Firebase credentials to enable database features');
 });
+
+module.exports = app;
