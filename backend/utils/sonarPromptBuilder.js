@@ -1,137 +1,136 @@
 
 class SonarPromptBuilder {
-  static buildThreatDetectionPrompt() {
-    return `
-Analyze the current global situation and identify the top 5 emerging threats across these domains:
-- Cyber warfare and AI attacks
-- Pandemic and health crises  
-- Climate disasters and resource conflicts
-- Economic instability and supply chain disruption
-- Geopolitical tensions and military conflicts
-- Space weather and infrastructure threats
-
-For each threat, provide:
-1. Threat title (concise, urgent)
-2. Severity score (0-100, where 90+ is existential)
-3. Type/Category
-4. Brief summary (2-3 sentences)
-5. Geographic regions affected
-6. Credible source citations
-7. Timeline of emergence
-
-Focus on threats that are:
-- Currently developing or accelerating
-- Have multi-domain impact potential
-- Could cascade into larger crises
-- Are being discussed by credible institutions (WHO, NATO, UN, etc.)
-
-Return analysis in JSON format with structured data.
-`;
-  }
-
   static buildSimulationPrompt(scenario) {
-    return `
-CRISIS SIMULATION REQUEST: "${scenario}"
+    return `Conduct a comprehensive crisis simulation analysis for the following scenario:
 
-Conduct a comprehensive analysis of this hypothetical scenario using systems thinking:
+SCENARIO: ${scenario}
+
+Please provide a detailed analysis including:
 
 1. CAUSAL CHAIN ANALYSIS:
-   - Map out the logical sequence of events that would unfold
-   - Identify key decision points and tipping points
-   - Show how effects could cascade across domains
+   - Initial trigger mechanisms
+   - Primary escalation pathways
+   - Secondary effect propagation
+   - System interaction points
+   - Terminal outcome scenarios
 
-2. IMPACT ASSESSMENT:
-   - Economic implications and market reactions
-   - Social and political consequences
-   - Infrastructure and security effects
-   - International relations impact
-   - Environmental consequences
+2. MITIGATION PROTOCOLS:
+   - Immediate response measures
+   - Short-term stabilization actions
+   - Medium-term recovery strategies
+   - Long-term prevention systems
+   - International coordination requirements
 
-3. MITIGATION STRATEGIES:
-   - Immediate response measures (0-48 hours)
-   - Short-term stabilization (1-4 weeks)
-   - Long-term recovery (months-years)
-   - Prevention strategies for similar scenarios
+3. IMPACT ASSESSMENT:
+   - Economic consequences and scale
+   - Social disruption potential
+   - Political stability implications
+   - Environmental considerations
+   - Timeline of effects emergence
 
-4. CONFIDENCE & SOURCES:
-   - Assign confidence levels to each prediction
-   - Cite relevant historical precedents
-   - Reference expert analysis and research
+4. CONFIDENCE FACTORS:
+   - Historical precedent strength
+   - Data availability and quality
+   - Model accuracy limitations
+   - Uncertainty quantification
 
-Present findings in structured format with clear reasoning chains.
-`;
+5. DATA SOURCES:
+   - Primary intelligence feeds
+   - Academic research foundations
+   - Government agency reports
+   - International organization assessments
+
+Format the response with clear section headers and actionable insights. Include specific time estimates and affected population numbers where possible.`;
   }
 
-  static buildVerificationPrompt(claim) {
-    return `
-THREAT VERIFICATION ANALYSIS: "${claim}"
+  static buildDeepAnalysisPrompt(crisisStep, analysisType) {
+    const typePrompts = {
+      'root_cause': `Conduct a deep root cause analysis of: "${crisisStep}"
 
-Conduct a rigorous fact-checking and credibility assessment:
+Examine:
+- Fundamental system vulnerabilities
+- Historical precedent patterns
+- Structural weaknesses
+- Policy gaps or failures
+- Environmental/economic triggers
+- Human factors and decision points
 
-1. EVIDENCE REVIEW:
-   - Gather supporting evidence from credible sources
-   - Identify contradictory evidence or alternative explanations
-   - Check for confirmation bias or information gaps
+Provide specific evidence and data sources.`,
 
-2. SOURCE ANALYSIS:
-   - Evaluate source credibility and expertise
-   - Check for potential conflicts of interest
-   - Cross-reference multiple independent sources
+      'escalation_factor': `Analyze escalation factors for: "${crisisStep}"
 
-3. LOGICAL ASSESSMENT:
-   - Test claim against known facts and patterns
-   - Identify logical fallacies or unsupported leaps
-   - Consider alternative explanations
+Investigate:
+- Amplification mechanisms
+- Feedback loops and cascades
+- Network effects and contagion
+- Decision-making pressure points
+- Information flow disruptions
+- Resource competition dynamics
 
-4. VERDICT:
-   - Assign credibility score (0-100%)
-   - Provide confidence interval
-   - Explain reasoning for assessment
-   - Highlight areas needing further investigation
+Include real-world examples and quantitative assessments.`,
 
-5. CONTEXTUAL FACTORS:
-   - Historical precedents
-   - Current geopolitical context
-   - Technological and scientific constraints
+      'cascading_effect': `Evaluate cascading effects of: "${crisisStep}"
 
-Return structured analysis with clear verdict and reasoning.
-`;
+Map:
+- Primary impact domains
+- Secondary effect propagation
+- System interdependencies
+- Critical infrastructure impacts
+- Economic ripple effects
+- Social and political consequences
+
+Provide timeline estimates and affected populations.`,
+
+      'historical_precedent': `Research historical precedents for: "${crisisStep}"
+
+Compare:
+- Similar crisis events and outcomes
+- Response effectiveness analysis
+- Lessons learned documentation
+- Pattern recognition insights
+- Successful mitigation examples
+- Failed intervention attempts
+
+Include specific dates, locations, and outcome data.`
+    };
+
+    return typePrompts[analysisType] || typePrompts['root_cause'];
   }
 
-  static buildTrendAnalysisPrompt(timeframe = '30 days') {
-    return `
-GLOBAL THREAT TREND ANALYSIS (${timeframe})
+  static buildRealTimePrompt(queryType, parameters = {}) {
+    const prompts = {
+      'threat_monitoring': `Monitor current global threat landscape focusing on:
+- Emerging cyber security incidents
+- Geopolitical tension escalations  
+- Health emergencies and pandemics
+- Climate-related disasters
+- Economic instability indicators
+- Social unrest patterns
 
-Analyze current threat patterns and emerging trends:
+Provide severity assessments and trend analysis.`,
 
-1. THREAT EVOLUTION:
-   - How have existing threats changed in severity?
-   - What new threat vectors have emerged?
-   - Which threats are accelerating vs. stabilizing?
+      'intelligence_gathering': `Gather current intelligence on:
+${parameters.focus || 'global security threats'}
 
-2. GEOGRAPHIC HOTSPOTS:
-   - Identify regions with increasing instability
-   - Map threat migration patterns
-   - Highlight unexpected threat locations
+Include:
+- Recent developments and timeline
+- Key stakeholder positions
+- Risk assessment metrics
+- Intervention opportunities
+- Monitoring recommendations`,
 
-3. DOMAIN ANALYSIS:
-   - Cyber threat landscape changes
-   - Health security developments
-   - Climate and resource stress patterns
-   - Economic vulnerability shifts
+      'crisis_update': `Provide real-time update on ongoing crisis:
+${parameters.crisisId || 'current situation'}
 
-4. INTERCONNECTION MAPPING:
-   - How are different threats reinforcing each other?
-   - Identify cascade risk patterns
-   - Spot emerging threat convergence zones
+Focus on:
+- Latest developments
+- Escalation or de-escalation trends
+- Response effectiveness
+- Emerging complications
+- Next steps recommendations`
+    };
 
-5. PREDICTIVE INDICATORS:
-   - Early warning signals to monitor
-   - Threshold levels for concern
-   - Probability assessments for escalation
-
-Provide data-driven analysis with trend indicators and forecasting.
-`;
+    return prompts[queryType] || prompts['threat_monitoring'];
   }
 }
 
