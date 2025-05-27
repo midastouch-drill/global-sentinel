@@ -10,17 +10,16 @@ require('dotenv').config();
 
 const app = express();
 
-// Rate limiting middleware
+// Rate limiting middleware - more permissive for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 200, // Increased limit for development
   message: 'Too many requests from this IP, please try again after 15 minutes'
 });
 
 // Import routes
 const healthRoutes = require('./routes/health');
 const detectionRoutes = require('./routes/detection');
-const ingestRoutes = require('./routes/ingest');
 const simulateRoutes = require('./routes/simulate');
 const sigintRoutes = require('./routes/sigint');
 const analysisRoutes = require('./routes/analysis');
@@ -29,7 +28,7 @@ const analysisRoutes = require('./routes/analysis');
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -38,10 +37,9 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(limiter);
 
-// Routes
+// Routes - FIXED: Removed duplicate ingest routes, consolidated under detection
 app.use('/health', healthRoutes);
 app.use('/api/detect', detectionRoutes);
-app.use('/api/detect', ingestRoutes);
 app.use('/api/simulate', simulateRoutes);
 app.use('/api/sigint', sigintRoutes);
 app.use('/api/analysis', analysisRoutes);
