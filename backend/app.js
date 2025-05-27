@@ -2,10 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { initializeApp } = require('./config/firebase');
+const { initializeFirebase } = require('./config/firebase'); // Changed from initializeApp to initializeFirebase
 
 // Initialize Firebase
-initializeApp();
+initializeFirebase();
 
 const app = express();
 const port = process.env.PORT || 5000;
