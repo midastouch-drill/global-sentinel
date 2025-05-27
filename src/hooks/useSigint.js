@@ -1,6 +1,6 @@
 
 import { useMutation } from '@tanstack/react-query';
-import { sigintApi } from '../api/threats';
+import { sigintApi } from '../api/threats.ts';
 import { useToast } from '@/hooks/use-toast';
 
 export const useSigintControls = () => {
