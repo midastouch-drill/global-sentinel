@@ -25,8 +25,38 @@ interface CrisisDetailPageProps {
   onBack: () => void;
 }
 
+interface ExpertOpinion {
+  expert: string;
+  quote: string;
+  credibility: string;
+}
+
+interface DataSource {
+  name: string;
+  url: string;
+  reliability: number;
+}
+
+interface AnalysisData {
+  title: string;
+  severity: number;
+  probability: number;
+  timeframe: string;
+  affectedPopulation: string;
+  economicImpact: string;
+  detailedAnalysis: {
+    root_causes: string[];
+    escalation_factors: string[];
+    cascading_effects: string[];
+    historical_precedents: string[];
+  };
+  realTimeData: Record<string, string>;
+  expertOpinions: ExpertOpinion[];
+  sources: DataSource[];
+}
+
 export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) => {
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +67,7 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
       // Simulate API call to Perplexity Sonar for comprehensive analysis
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const mockAnalysis = {
+      const mockAnalysis: AnalysisData = {
         title: crisisStep,
         severity: 78,
         probability: 85,
@@ -121,6 +151,26 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
           </div>
         </div>
       </motion.div>
+    );
+  }
+
+  if (!analysis) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="cyber-card p-8 text-center">
+            <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-400 mb-2">Analysis Failed</h2>
+            <p className="text-muted-foreground mb-6">
+              Unable to load crisis analysis. Please try again.
+            </p>
+            <Button onClick={onBack} variant="outline" className="cyber-button">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Simulation
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -286,7 +336,7 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analysis.expertOpinions.map((opinion: any, index: number) => (
+              {analysis.expertOpinions.map((opinion: ExpertOpinion, index: number) => (
                 <div key={index} className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
                   <blockquote className="text-lg italic mb-2">
                     "{opinion.quote}"
@@ -306,7 +356,7 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {analysis.sources.map((source: any, index: number) => (
+              {analysis.sources.map((source: DataSource, index: number) => (
                 <motion.div
                   key={index}
                   whileHover={{ scale: 1.02 }}
