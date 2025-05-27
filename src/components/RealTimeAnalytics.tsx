@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -347,7 +345,7 @@ const RealTimeAnalytics = () => {
                           className="w-20 h-2"
                         />
                         <Badge variant="outline" className="cyber-badge">
-                          {count}
+                          {count as React.ReactNode}
                         </Badge>
                       </div>
                     </div>
