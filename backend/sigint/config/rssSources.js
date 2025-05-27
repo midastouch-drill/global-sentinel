@@ -9,7 +9,7 @@ module.exports = {
     },
     {
       name: 'Reuters World News',
-      url: 'https://feeds.reuters.com/reuters/worldNews',
+      url: 'https://feeds.reuters.com/reuters/worldnews',
       category: 'General', 
       priority: 'high'
     },
@@ -28,13 +28,13 @@ module.exports = {
   ],
   health: [
     {
-      name: 'WHO Disease Outbreak News',
-      url: 'https://www.who.int/feeds/entity/csr/don/en/rss.xml',
+      name: 'WHO Health News',
+      url: 'https://www.who.int/rss-feeds/news-english.xml',
       category: 'Health',
       priority: 'critical'
     },
     {
-      name: 'CDC Health News',
+      name: 'CDC Health Updates',
       url: 'https://tools.cdc.gov/api/v2/resources/media/132608.rss',
       category: 'Health',
       priority: 'high'
@@ -56,8 +56,8 @@ module.exports = {
   ],
   climate: [
     {
-      name: 'Climate Central',
-      url: 'https://www.climatecentral.org/rss.xml',
+      name: 'NASA Climate News',
+      url: 'https://climate.nasa.gov/rss/news.xml',
       category: 'Climate',
       priority: 'medium'
     }

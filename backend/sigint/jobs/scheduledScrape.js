@@ -31,36 +31,52 @@ class ScheduledScrape {
 
     try {
       let totalThreats = 0;
+      let totalSuccessful = 0;
+      let totalFailed = 0;
 
       // RSS Sources
       logger.info('📡 Processing RSS sources...');
       const rssThreats = await rssScraper.scrapeAllSources(rssSources);
-      await rssScraper.forwardToDetect(rssThreats);
+      const rssResults = await rssScraper.forwardToDetect(rssThreats);
       totalThreats += rssThreats.length;
+      totalSuccessful += rssResults.filter(r => r.success).length;
+      totalFailed += rssResults.filter(r => !r.success).length;
 
       // API Sources  
       logger.info('🔌 Processing API sources...');
       const apiThreats = await apiScraper.scrapeAllSources(apiSources);
-      await apiScraper.forwardToDetect(apiThreats);
+      const apiResults = await apiScraper.forwardToDetect(apiThreats);
       totalThreats += apiThreats.length;
+      totalSuccessful += apiResults.filter(r => r.success).length;
+      totalFailed += apiResults.filter(r => !r.success).length;
 
       // HTML Sources
       logger.info('🕸️ Processing HTML sources...');
       const htmlThreats = await htmlScraper.scrapeAllSources(htmlSources);
-      await htmlScraper.forwardToDetect(htmlThreats);
+      const htmlResults = await htmlScraper.forwardToDetect(htmlThreats);
       totalThreats += htmlThreats.length;
+      totalSuccessful += htmlResults.filter(r => r.success).length;
+      totalFailed += htmlResults.filter(r => !r.success).length;
 
       // Reddit Sources
       logger.info('🟠 Processing Reddit sources...');
       const redditThreats = await redditScraper.scrapeAllSubreddits();
-      await redditScraper.forwardToDetect(redditThreats);
+      const redditResults = await redditScraper.forwardToDetect(redditThreats);
       totalThreats += redditThreats.length;
+      totalSuccessful += redditResults.filter(r => r.success).length;
+      totalFailed += redditResults.filter(r => !r.success).length;
 
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
       logger.info(`✅ Scrape cycle completed: ${totalThreats} threats processed in ${duration}s`);
+      logger.info(`📊 Overall results: ${totalSuccessful} successful forwards, ${totalFailed} failed forwards`);
+
+      if (totalFailed > 0) {
+        logger.warn(`⚠️ ${totalFailed} threats failed to forward - check Core Backend connection`);
+      }
 
     } catch (error) {
       logger.error(`❌ Scrape cycle failed: ${error.message}`);
+      logger.error(`   Stack trace: ${error.stack}`);
     } finally {
       this.isRunning = false;
     }
@@ -80,6 +96,7 @@ class ScheduledScrape {
     // Health check every hour
     const healthJob = cron.schedule('0 * * * *', () => {
       logger.info(`💓 SIGINT Health Check - Active scrapers: RSS, API, HTML, Reddit`);
+      logger.info(`💓 Current status: ${this.isRunning ? 'SCRAPING' : 'IDLE'}`);
     }, {
       scheduled: false,
       timezone: "UTC"
@@ -94,6 +111,7 @@ class ScheduledScrape {
     
     // Run initial scrape after 30 seconds
     setTimeout(() => {
+      logger.info('🎯 Running initial scrape cycle...');
       this.runFullScrape();
     }, 30000);
   }

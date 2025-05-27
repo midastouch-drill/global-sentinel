@@ -65,15 +65,37 @@ class RSScraper {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        logger.info(`📤 Attempting to forward RSS threat: ${threat.title} (attempt ${attempt})`);
+        
         const response = await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
           timeout: 10000,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 
+            'Content-Type': 'application/json',
+            'User-Agent': 'Global Sentinel SIGINT v1.0'
+          }
         });
         
-        logger.info(`📤 Forwarded threat: ${threat.title}`);
-        return { success: true };
+        if (response.data.success) {
+          logger.info(`✅ Successfully forwarded RSS threat: ${threat.title}`);
+          return { success: true, threatId: response.data.threatId };
+        } else {
+          logger.error(`❌ Backend rejected RSS threat: ${response.data.error}`);
+          return { success: false, error: response.data.error };
+        }
         
       } catch (error) {
+        const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
+        const statusCode = error.response?.status || 'No status';
+        
+        logger.error(`❌ Failed to forward RSS threat (attempt ${attempt}/${maxRetries}): ${threat.title}`);
+        logger.error(`   Error: ${errorMsg}`);
+        logger.error(`   Status: ${statusCode}`);
+        logger.error(`   URL: ${coreUrl}/api/detect/ingest`);
+        
+        if (error.code === 'ECONNREFUSED') {
+          logger.error(`   Connection refused - Core backend not running on ${coreUrl}`);
+        }
+        
         if (error.response?.status === 429) {
           const retryAfter = error.response.headers['retry-after'];
           const delayMs = retryAfter ? parseInt(retryAfter) * 1000 : Math.min(1000 * Math.pow(2, attempt), 30000);
@@ -82,15 +104,13 @@ class RSScraper {
           await this.delay(delayMs);
           
           if (attempt === maxRetries) {
-            logger.error(`❌ Failed to forward after ${maxRetries} attempts: ${threat.title}`);
             return { success: false, error: 'Rate limited' };
           }
           continue;
         }
         
-        logger.error(`❌ Failed to forward threat (attempt ${attempt}): ${error.message}`);
         if (attempt === maxRetries) {
-          return { success: false, error: error.message };
+          return { success: false, error: errorMsg };
         }
         
         // Exponential backoff with jitter
@@ -106,21 +126,27 @@ class RSScraper {
       threats = [threats];
     }
 
-    logger.info(`📤 Starting batch forward of ${threats.length} threats`);
+    logger.info(`📤 Starting RSS batch forward of ${threats.length} threats`);
     const results = [];
+    let successful = 0;
+    let failed = 0;
     
     for (const threat of threats) {
       const result = await this.forwardToDetectWithRetry(threat);
       results.push(result);
       
+      if (result.success) {
+        successful++;
+      } else {
+        failed++;
+        logger.error(`❌ Failed to forward RSS threat: ${threat.title} - ${result.error}`);
+      }
+      
       // Rate limiting between requests (300ms as requested)
       await this.delay(300);
     }
     
-    const successful = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
-    
-    logger.info(`📊 Forward complete: ${successful} success, ${failed} failed`);
+    logger.info(`📊 RSS Forward complete: ${successful} success, ${failed} failed`);
     return results;
   }
 }

@@ -61,20 +61,82 @@ class RedditScraper {
     return allThreats;
   }
 
-  async forwardToDetect(threats) {
+  async forwardToDetectWithRetry(threat, maxRetries = 3) {
     const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:5000';
     
-    for (const threat of threats) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
-          timeout: 5000,
-          headers: { 'Content-Type': 'application/json' }
+        logger.info(`📤 Attempting to forward Reddit threat: ${threat.title} (attempt ${attempt})`);
+        
+        const response = await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
+          timeout: 10000,
+          headers: { 
+            'Content-Type': 'application/json',
+            'User-Agent': 'Global Sentinel SIGINT v1.0'
+          }
         });
-        logger.info(`📤 Forwarded Reddit threat: ${threat.title}`);
+        
+        if (response.data.success) {
+          logger.info(`✅ Successfully forwarded Reddit threat: ${threat.title}`);
+          return { success: true, threatId: response.data.threatId };
+        } else {
+          logger.error(`❌ Backend rejected threat: ${response.data.error}`);
+          return { success: false, error: response.data.error };
+        }
+        
       } catch (error) {
-        logger.error(`❌ Failed to forward Reddit threat: ${error.message}`);
+        const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
+        const statusCode = error.response?.status || 'No status';
+        
+        logger.error(`❌ Failed to forward Reddit threat (attempt ${attempt}/${maxRetries}): ${threat.title}`);
+        logger.error(`   Error: ${errorMsg}`);
+        logger.error(`   Status: ${statusCode}`);
+        logger.error(`   URL: ${coreUrl}/api/detect/ingest`);
+        
+        if (error.code === 'ECONNREFUSED') {
+          logger.error(`   Connection refused - Core backend not running on ${coreUrl}`);
+        }
+        
+        if (attempt === maxRetries) {
+          return { success: false, error: errorMsg };
+        }
+        
+        // Exponential backoff
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+        logger.info(`   Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
+  }
+
+  async forwardToDetect(threats) {
+    if (!Array.isArray(threats)) {
+      threats = [threats];
+    }
+
+    logger.info(`📤 Starting Reddit threat forwarding: ${threats.length} threats`);
+    
+    const results = [];
+    let successful = 0;
+    let failed = 0;
+    
+    for (const threat of threats) {
+      const result = await this.forwardToDetectWithRetry(threat);
+      results.push(result);
+      
+      if (result.success) {
+        successful++;
+      } else {
+        failed++;
+        logger.error(`❌ Failed to forward Reddit threat: ${threat.title} - ${result.error}`);
+      }
+      
+      // Rate limiting between requests
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    
+    logger.info(`📊 Reddit forward complete: ${successful} success, ${failed} failed`);
+    return results;
   }
 }
 

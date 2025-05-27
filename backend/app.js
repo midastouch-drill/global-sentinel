@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -19,6 +20,7 @@ const limiter = rateLimit({
 // Import routes
 const healthRoutes = require('./routes/health');
 const detectionRoutes = require('./routes/detection');
+const ingestRoutes = require('./routes/ingest');
 const simulateRoutes = require('./routes/simulate');
 const sigintRoutes = require('./routes/sigint');
 const analysisRoutes = require('./routes/analysis');
@@ -39,6 +41,7 @@ app.use(limiter);
 // Routes
 app.use('/health', healthRoutes);
 app.use('/api/detect', detectionRoutes);
+app.use('/api/detect', ingestRoutes);
 app.use('/api/simulate', simulateRoutes);
 app.use('/api/sigint', sigintRoutes);
 app.use('/api/analysis', analysisRoutes);
