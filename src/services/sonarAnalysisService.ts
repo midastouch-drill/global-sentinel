@@ -1,9 +1,11 @@
 
+import { threatsApi } from '../api/threats';
+
 interface SonarAnalysisResult {
   success: boolean;
   analysis: string;
-  sources: string[];
   confidence: number;
+  sources: string[];
 }
 
 class SonarAnalysisService {
@@ -11,37 +13,54 @@ class SonarAnalysisService {
     crisisStep: string, 
     analysisType: 'root_cause' | 'escalation_factor' | 'cascading_effect' | 'historical_precedent'
   ): Promise<SonarAnalysisResult> {
-    
-    // Simulate AI analysis delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const analyses = {
-      root_cause: `Deep analysis of "${crisisStep}" reveals fundamental systemic vulnerabilities. The primary root cause stems from a convergence of infrastructure deficits, regulatory gaps, and resource allocation inefficiencies. Historical data indicates this pattern emerges when traditional warning systems fail to adapt to rapidly evolving threat landscapes.`,
+    try {
+      console.log(`🧠 Initiating Sonar AI analysis for: ${crisisStep}`);
       
-      escalation_factor: `Analysis of escalation patterns for "${crisisStep}" identifies several critical amplification mechanisms. Social media dynamics, institutional response delays, and cascading dependency failures create a multiplier effect. Economic uncertainty and public trust erosion accelerate the escalation timeline significantly.`,
+      // Call backend for deep analysis
+      const response = await threatsApi.deepAnalysis({
+        crisisStep,
+        analysisType
+      });
       
-      cascading_effect: `Cascading impact analysis of "${crisisStep}" reveals extensive downstream consequences across multiple sectors. Primary effects trigger secondary disruptions in supply chains, financial markets, and social systems. The interconnected nature of modern infrastructure amplifies these effects exponentially.`,
+      if (response.data.success) {
+        return {
+          success: true,
+          analysis: response.data.analysis,
+          confidence: response.data.confidence,
+          sources: response.data.sources
+        };
+      } else {
+        throw new Error('Backend analysis failed');
+      }
       
-      historical_precedent: `Historical precedent analysis for "${crisisStep}" draws parallels to similar events from the past 50 years. Pattern recognition algorithms identify comparable crisis trajectories, response effectiveness metrics, and outcome probabilities based on intervention timing and resource allocation strategies.`
-    };
-
-    const sources = [
-      'perplexity-sonar-analysis.ai',
-      'global-intelligence-network.org',
-      'crisis-pattern-database.gov',
-      'real-time-threat-assessment.mil'
-    ];
-
-    return {
-      success: true,
-      analysis: analyses[analysisType],
-      sources,
-      confidence: Math.floor(Math.random() * 20) + 75 // 75-95%
-    };
+    } catch (error) {
+      console.error('❌ Sonar analysis failed:', error);
+      
+      // Return fallback analysis
+      return {
+        success: false,
+        analysis: this.generateFallbackAnalysis(crisisStep, analysisType),
+        confidence: 60,
+        sources: ['fallback-intelligence.gov', 'crisis-analysis.org']
+      };
+    }
   }
-
-  static generateFallbackAnalysis(crisisStep: string, analysisType: string): string {
-    return `Fallback analysis for ${analysisType}: "${crisisStep}" requires further investigation. Limited data available for comprehensive assessment. Recommend gathering additional intelligence sources and conducting expanded threat modeling.`;
+  
+  static generateFallbackAnalysis(
+    crisisStep: string, 
+    analysisType: string
+  ): string {
+    const analyses = {
+      'root_cause': `Root cause analysis indicates that "${crisisStep}" stems from systemic vulnerabilities in global infrastructure and coordination mechanisms. Historical patterns suggest that similar events occur when multiple risk factors converge simultaneously.`,
+      
+      'escalation_factor': `Escalation analysis reveals that "${crisisStep}" could amplify through interconnected systems, social media amplification, and inadequate early warning mechanisms. The current geopolitical climate creates additional volatility.`,
+      
+      'cascading_effect': `Cascading effect modeling shows that "${crisisStep}" could trigger secondary impacts across supply chains, financial markets, and social stability. Critical dependencies create vulnerability chains that require immediate attention.`,
+      
+      'historical_precedent': `Historical precedent analysis of "${crisisStep}" reveals similar events in past decades that led to significant global impacts. Patterns indicate that early intervention and international coordination are crucial for mitigation.`
+    };
+    
+    return analyses[analysisType] || `Fallback analysis for "${crisisStep}" indicates potential risks that require further investigation and monitoring.`;
   }
 }
 

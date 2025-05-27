@@ -44,20 +44,28 @@ export const threatsApi = {
   // Get specific threat by ID
   getById: (id: string) => api.get(`/api/threats/${id}`),
   
-  // Vote on threat
-  vote: (data: { threatId: string; vote: 'credible' | 'not_credible' }) => 
-    api.post('/api/vote', data),
+  // Vote on threat (citizen validation)
+  vote: (data: { threatId: string; vote: 'credible' | 'not_credible'; reasoning?: string }) => 
+    api.post('/api/validate', data),
   
   // Verify threat
   verify: (data: { threatId: string; sources: string[]; credibilityScore: number }) =>
     api.post('/api/verify', data),
   
   // Run simulation
-  simulate: (data: { scenario: string; parameters: any }) => 
+  simulate: (data: { scenario: string; parameters?: any }) => 
     api.post('/api/simulate', data),
   
+  // Crisis pathway analysis
+  analyzeCrisis: (data: { scenario: string; analysisType?: string }) =>
+    api.post('/api/crisis/analyze', data),
+  
+  // Deep crisis analysis via Sonar
+  deepAnalysis: (data: { crisisStep: string; analysisType: string }) =>
+    api.post('/api/crisis/deep-analysis', data),
+  
   // Get trends data
-  getTrends: () => api.get('/api/trends'),
+  getTrends: () => api.get('/api/analysis/trends'),
   
   // Trigger threat detection
   detectThreats: () => api.post('/api/detect'),

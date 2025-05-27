@@ -23,6 +23,8 @@ const detectionRoutes = require('./routes/detection');
 const simulateRoutes = require('./routes/simulate');
 const sigintRoutes = require('./routes/sigint');
 const analysisRoutes = require('./routes/analysis');
+const validateRoutes = require('./routes/validate');
+const crisisRoutes = require('./routes/crisis');
 
 // Middleware setup
 app.use(express.json({ limit: '5mb' }));
@@ -37,12 +39,14 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(limiter);
 
-// Routes - FIXED: Removed duplicate ingest routes, consolidated under detection
+// Routes - Including new validation and crisis routes
 app.use('/health', healthRoutes);
 app.use('/api/detect', detectionRoutes);
 app.use('/api/simulate', simulateRoutes);
 app.use('/api/sigint', sigintRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/validate', validateRoutes);
+app.use('/api/crisis', crisisRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

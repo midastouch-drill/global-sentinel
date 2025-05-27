@@ -39,24 +39,36 @@ class DetectionController {
     }
   }
 
-  // Get active threats - PUBLIC endpoint for frontend
+  // Get active threats - PUBLIC endpoint for frontend (FIXED: Remove compound query)
   static async getActiveThreats(req, res) {
     try {
       console.log('📋 Fetching active threats for frontend');
       
       const db = getFirestore();
+      
+      // Use simple query without compound index requirement
       const threatsSnapshot = await db.collection('threats')
-        .where('status', '==', 'active')
-        .orderBy('createdAt', 'desc')
         .limit(100)
         .get();
 
       const threats = [];
       threatsSnapshot.forEach(doc => {
-        threats.push({
+        const threatData = {
           id: doc.id,
           ...doc.data()
-        });
+        };
+        
+        // Filter active threats in code instead of query
+        if (threatData.status === 'active' || !threatData.status) {
+          threats.push(threatData);
+        }
+      });
+
+      // Sort by timestamp in code
+      threats.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.timestamp || 0).getTime();
+        const timeB = new Date(b.createdAt || b.timestamp || 0).getTime();
+        return timeB - timeA; // Newest first
       });
 
       console.log(`✅ Retrieved ${threats.length} active threats for frontend`);
