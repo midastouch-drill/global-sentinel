@@ -1,61 +1,58 @@
-
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const { testFirebaseConnection } = require('./config/firebase');
+const { initializeApp } = require('./config/firebase');
 
-require('dotenv').config();
+// Initialize Firebase
+initializeApp();
 
 const app = express();
+const port = process.env.PORT || 5000;
 
-// Rate limiting middleware - more permissive for development
+// Enable CORS
+app.use(cors());
+
+// Set security HTTP headers
+app.use(helmet());
+
+// Rate limiting middleware
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Increased limit for development
+  max: 100, // Limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again after 15 minutes'
 });
-
-// Import routes
-const healthRoutes = require('./routes/health');
-const detectionRoutes = require('./routes/detection');
-const simulateRoutes = require('./routes/simulate');
-const sigintRoutes = require('./routes/sigint');
-const analysisRoutes = require('./routes/analysis');
-const validateRoutes = require('./routes/validate');
-const crisisRoutes = require('./routes/crisis');
-const verifyRoutes = require('./routes/verify');
-const ingestRoutes = require('./routes/ingest');
-
-// Middleware setup
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-app.use(helmet());
-app.use(morgan('dev'));
 app.use(limiter);
 
-// Routes - Including all required endpoints
-app.use('/health', healthRoutes);
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Route imports
+const detectionRoutes = require('./routes/detection');
+const voteRoutes = require('./routes/vote');
+const simulationRoutes = require('./routes/simulation');
+const verifyRoutes = require('./routes/verify');
+
+// Logging middleware (optional)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
+
+// Routes
 app.use('/api/detect', detectionRoutes);
-app.use('/api/simulate', simulateRoutes);
-app.use('/api/sigint', sigintRoutes);
-app.use('/api/analysis', analysisRoutes);
-app.use('/api/validate', validateRoutes);
-app.use('/api/crisis', crisisRoutes);
+app.use('/api/vote', voteRoutes);
+app.use('/api/simulate', simulationRoutes);
 app.use('/api/verify', verifyRoutes);
-app.use('/api/ingest', ingestRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Internal Server Error');
+  res.status(500).send('Something broke!');
 });
 
-module.exports = app;
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
