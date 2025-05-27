@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,8 +30,7 @@ import {
   Bar,
   PieChart,
   Pie,
-  Cell,
-  LabelList
+  Cell
 } from 'recharts';
 import { useThreats, useTrends } from '@/hooks/useThreats';
 
@@ -109,6 +109,23 @@ const RealTimeAnalytics = () => {
   const globalRiskIndex = Math.round(
     threats.reduce((sum: number, threat: any) => sum + threat.severity, 0) / threats.length || 0
   );
+
+  // Custom tooltip content with proper typing
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-gray-800 p-3 rounded-lg border border-gray-600 text-white">
+          <p className="font-medium">{`${label}`}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }}>
+              {`${entry.dataKey}: ${entry.value}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -228,13 +245,7 @@ const RealTimeAnalytics = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="time" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px'
-                    }}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Line 
                     type="monotone" 
                     dataKey="threats" 
@@ -280,7 +291,7 @@ const RealTimeAnalytics = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -303,13 +314,7 @@ const RealTimeAnalytics = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="type" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px'
-                    }}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="count" fill="#06b6d4" />
                 </BarChart>
               </ResponsiveContainer>
