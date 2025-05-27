@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -19,13 +18,13 @@ export const threatsApi = {
     api.get('/threats/trends'),
   
   vote: (voteData: { threatId: string; vote: 'credible' | 'not_credible'; userId?: string }) =>
-    api.post('/vote', voteData),
+    api.post('/crisis/vote', voteData),
   
-  verify: (verifyData: { threatId: string; sources: string[]; credibilityScore: number }) =>
-    api.post('/verify', verifyData),
+  verify: (verifyData: { threatId?: string; claim: string; userId?: string }) =>
+    api.post('/crisis/verify', verifyData),
   
   simulate: (simulationData: { scenario: string }) =>
-    api.post('/simulate', simulationData),
+    api.post('/crisis/simulate', simulationData),
   
   analyze: (analysisData: { step: string; type: string }) =>
     api.post('/analyze', analysisData),

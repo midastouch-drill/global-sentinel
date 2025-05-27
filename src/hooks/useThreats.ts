@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { threatsApi } from '../api/threats';
@@ -43,7 +44,7 @@ export const useVerifyThreat = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (verifyData: { threatId: string; sources: string[]; credibilityScore: number }) =>
+    mutationFn: (verifyData: { threatId?: string; claim: string; userId?: string }) =>
       threatsApi.verify(verifyData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['threats'] });

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSimulate } from '@/hooks/useThreats';
+import { EnhancedCrisisDetailPage } from './EnhancedCrisisDetailPage';
 
 interface SimulationResult {
   id: string;
@@ -42,6 +42,7 @@ export const RevolutionaryCrisisSimulator = ({ onStepAnalyze }: RevolutionaryCri
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [simulationStage, setSimulationStage] = useState<'input' | 'analyzing' | 'results'>('input');
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [selectedCrisisStep, setSelectedCrisisStep] = useState<string | null>(null);
   const { toast } = useToast();
   const simulateMutation = useSimulate();
 
@@ -93,12 +94,15 @@ export const RevolutionaryCrisisSimulator = ({ onStepAnalyze }: RevolutionaryCri
 
     try {
       const response = await simulateMutation.mutateAsync({ scenario });
-      setResult(response.data.simulation || response.data);
+      
+      // Handle different response structures
+      const simulationData = response.data?.simulation || response.data || response;
+      setResult(simulationData);
       setSimulationStage('results');
       
       toast({
         title: "✅ Simulation Complete",
-        description: `Crisis pathway mapped with ${(response.data.simulation || response.data).confidence}% confidence`,
+        description: `Crisis pathway mapped with ${simulationData.confidence}% confidence`,
       });
     } catch (error) {
       console.error('Simulation error:', error);
@@ -147,7 +151,7 @@ export const RevolutionaryCrisisSimulator = ({ onStepAnalyze }: RevolutionaryCri
   };
 
   const handleStepClick = (step: string, type: 'crisis' | 'mitigation') => {
-    onStepAnalyze?.(step, type);
+    setSelectedCrisisStep(step);
     
     toast({
       title: "🔍 Deep Analysis Initiated",
@@ -160,7 +164,19 @@ export const RevolutionaryCrisisSimulator = ({ onStepAnalyze }: RevolutionaryCri
     setResult(null);
     setAnalysisProgress(0);
     setScenario('');
+    setSelectedCrisisStep(null);
   };
+
+  // Show enhanced crisis detail page if a step is selected
+  if (selectedCrisisStep) {
+    return (
+      <EnhancedCrisisDetailPage 
+        crisisStep={selectedCrisisStep}
+        stepType="crisis"
+        onBack={() => setSelectedCrisisStep(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
