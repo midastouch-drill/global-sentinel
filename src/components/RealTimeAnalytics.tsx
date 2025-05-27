@@ -103,7 +103,7 @@ const RealTimeAnalytics = () => {
     type,
     count,
     percentage: Math.round((count as number / threats.length) * 100)
-  }));
+  });
 
   const globalRiskIndex = Math.round(
     threats.reduce((sum: number, threat: any) => sum + threat.severity, 0) / threats.length || 0
