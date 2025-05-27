@@ -25,6 +25,8 @@ const sigintRoutes = require('./routes/sigint');
 const analysisRoutes = require('./routes/analysis');
 const validateRoutes = require('./routes/validate');
 const crisisRoutes = require('./routes/crisis');
+const verifyRoutes = require('./routes/verify');
+const ingestRoutes = require('./routes/ingest');
 
 // Middleware setup
 app.use(express.json({ limit: '5mb' }));
@@ -39,7 +41,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(limiter);
 
-// Routes - Including new validation and crisis routes
+// Routes - Including all required endpoints
 app.use('/health', healthRoutes);
 app.use('/api/detect', detectionRoutes);
 app.use('/api/simulate', simulateRoutes);
@@ -47,6 +49,8 @@ app.use('/api/sigint', sigintRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/validate', validateRoutes);
 app.use('/api/crisis', crisisRoutes);
+app.use('/api/verify', verifyRoutes);
+app.use('/api/ingest', ingestRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

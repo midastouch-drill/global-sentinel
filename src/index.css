@@ -1,75 +1,102 @@
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
-    --radius: 0.75rem;
-  }
+:root {
+  --cyber-primary: #00d9ff;
+  --cyber-secondary: #ff0080;
+  --cyber-accent: #00ff88;
+  --cyber-warning: #ffaa00;
+  --cyber-danger: #ff4444;
+  --cyber-bg: #0a0e1a;
+  --cyber-surface: #1a1f2e;
+  --cyber-border: #2a3441;
+  --cyber-glow: 0 0 20px currentColor;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-  code {
-    font-family: 'JetBrains Mono', monospace;
-  }
+* {
+  box-sizing: border-box;
 }
 
-/* Global Sentinel Custom Styles */
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--cyber-bg);
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Orbitron', monospace;
+}
+
+/* Cyber UI Components */
 .cyber-card {
-  @apply bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-sm border border-cyan-500/30 rounded-lg shadow-2xl;
+  @apply bg-slate-900/80 border border-slate-700/50 rounded-lg backdrop-blur-sm;
   box-shadow: 
-    0 0 20px rgba(6, 182, 212, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(59, 130, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.cyber-card:hover {
+  border-color: var(--cyber-primary);
+  box-shadow: 
+    0 8px 25px -5px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(0, 217, 255, 0.3),
+    0 0 20px rgba(0, 217, 255, 0.1);
 }
 
 .cyber-button {
-  @apply bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
-         border border-cyan-400/50 shadow-lg transition-all duration-300;
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+  @apply relative overflow-hidden;
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  transition: all 0.3s ease;
 }
 
 .cyber-button:hover {
-  box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.2) 0%, rgba(0, 217, 255, 0.1) 100%);
+  border-color: var(--cyber-primary);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
   transform: translateY(-1px);
 }
 
-.threat-card {
-  @apply bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-sm 
-         border border-red-500/30 rounded-lg p-4 shadow-2xl;
-  box-shadow: 
-    0 0 20px rgba(239, 68, 68, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+.cyber-button:active {
+  transform: translateY(0);
 }
 
+.cyber-input {
+  @apply bg-slate-900/50 border border-slate-600/50 rounded-md;
+  transition: all 0.3s ease;
+}
+
+.cyber-input:focus {
+  border-color: var(--cyber-primary);
+  box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.2);
+}
+
+.cyber-badge {
+  @apply bg-slate-800/80 border border-slate-600/50;
+  backdrop-filter: blur(4px);
+}
+
+.cyber-tabs {
+  @apply bg-slate-900/80 border border-slate-700/50 rounded-lg;
+}
+
+.cyber-tab {
+  @apply relative;
+  transition: all 0.3s ease;
+}
+
+.cyber-tab[data-state="active"] {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(0, 217, 255, 0.05) 100%);
+  color: var(--cyber-primary);
+}
+
+/* Neon effects */
 .neon-text {
   text-shadow: 
     0 0 5px currentColor,
@@ -77,113 +104,165 @@
     0 0 15px currentColor;
 }
 
+.neon-border {
+  border: 1px solid currentColor;
+  box-shadow: 
+    0 0 5px currentColor,
+    inset 0 0 5px currentColor;
+}
+
+/* Threat-specific styles */
+.threat-card {
+  @apply cyber-card p-4;
+  border-left: 4px solid var(--cyber-primary);
+}
+
+.threat-card.critical {
+  border-left-color: var(--cyber-danger);
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.05) 0%, transparent 100%);
+}
+
+.threat-card.high {
+  border-left-color: var(--cyber-warning);
+  background: linear-gradient(135deg, rgba(255, 170, 0, 0.05) 0%, transparent 100%);
+}
+
+/* Matrix background effect */
+.matrix-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  z-index: -1;
+}
+
+/* Scan line effect */
 .scan-line {
-  @apply fixed inset-0 pointer-events-none z-30;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(6, 182, 212, 0.03) 50%,
-    transparent 100%
-  );
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyber-primary), transparent);
   animation: scan 3s linear infinite;
+  z-index: 1000;
+  pointer-events: none;
 }
 
 @keyframes scan {
-  0% { transform: translateY(-100vh); }
+  0% { transform: translateY(-2px); }
   100% { transform: translateY(100vh); }
+}
+
+/* Pulse animations */
+@keyframes threat-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 @keyframes pulse-glow {
   0%, 100% { 
-    box-shadow: 0 0 5px currentColor;
     opacity: 1;
+    filter: drop-shadow(0 0 5px currentColor);
   }
   50% { 
-    box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
-    opacity: 0.8;
+    opacity: 0.7;
+    filter: drop-shadow(0 0 15px currentColor);
   }
-}
-
-@keyframes threat-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .animate-threat-pulse {
   animation: threat-pulse 1.5s ease-in-out infinite;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* Enhanced Map Styles */
-.threat-popup-container .leaflet-popup-content-wrapper {
-  @apply bg-slate-900 border border-cyan-500/50 rounded-lg shadow-2xl;
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
-}
-
-.threat-popup-container .leaflet-popup-tip {
-  @apply bg-slate-900 border-cyan-500/50;
-}
-
-.threat-popup {
-  @apply text-white min-w-[250px];
-}
-
-.threat-popup-header {
-  @apply border-b border-cyan-500/30 pb-2 mb-2;
-}
-
-.threat-popup-content button {
-  @apply transition-colors duration-200;
-}
-
-.threat-marker-critical {
-  animation: threat-pulse 1s ease-in-out infinite;
-}
-
-.threat-marker-normal {
-  transition: all 0.3s ease;
-}
-
-/* Scrollbar Styling */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-slate-900;
+  background: var(--cyber-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-cyan-600 rounded-full;
+  background: var(--cyber-border);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-cyan-500;
+  background: var(--cyber-primary);
 }
 
-/* Text Truncation */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;  
-  overflow: hidden;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Chart styling */
+.recharts-tooltip-wrapper {
+  border-radius: 8px !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Focus states */
+.cyber-button:focus-visible,
+.cyber-input:focus-visible {
+  outline: 2px solid var(--cyber-primary);
+  outline-offset: 2px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .cyber-card {
+    @apply rounded-lg;
+  }
+  
+  .neon-text {
+    text-shadow: 
+      0 0 3px currentColor,
+      0 0 6px currentColor;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .cyber-card {
+    border-width: 2px;
+  }
+  
+  .cyber-button {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-threat-pulse,
+  .animate-pulse-glow,
+  .scan-line {
+    animation: none;
+  }
+  
+  .cyber-button:hover {
+    transform: none;
+  }
 }
