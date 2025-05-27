@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Brain, Play, Zap, Target, ArrowRight } from 'lucide-react';
+import { Brain, Play, Zap, Target, ArrowRight, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CrisisDetailPage } from './CrisisDetailPage';
+import { motion } from 'framer-motion';
 
 interface SimulationResult {
   scenario: string;
@@ -22,6 +24,8 @@ export const CrisisSimulator = () => {
   const [scenario, setScenario] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
   const [result, setResult] = useState<SimulationResult | null>(null);
+  const [selectedCrisisStep, setSelectedCrisisStep] = useState<string | null>(null);
+  const [selectedMitigation, setSelectedMitigation] = useState<string | null>(null);
   const { toast } = useToast();
 
   const demoScenario = "Southern Europe is showing signs of impending drought-induced political instability.";
@@ -85,10 +89,55 @@ export const CrisisSimulator = () => {
     setScenario(demoScenario);
   };
 
+  const handleCrisisStepClick = (step: string) => {
+    setSelectedCrisisStep(step);
+  };
+
+  const handleMitigationClick = (mitigation: string) => {
+    setSelectedMitigation(mitigation);
+  };
+
+  const handleSourceClick = (source: string) => {
+    const sourceUrls: Record<string, string> = {
+      "EU Climate Reports": "https://climate.ec.europa.eu/eu-action/adaptation-climate-change_en",
+      "IMF Economic Analysis": "https://www.imf.org/en/Publications/WEO",
+      "WHO Migration Studies": "https://www.who.int/news-room/fact-sheets/detail/climate-change-and-health",
+      "Historical Conflict Data": "https://www.sipri.org/databases"
+    };
+    
+    if (sourceUrls[source]) {
+      window.open(sourceUrls[source], '_blank');
+    }
+  };
+
+  // Show crisis detail page if a step is selected
+  if (selectedCrisisStep) {
+    return (
+      <CrisisDetailPage 
+        crisisStep={selectedCrisisStep}
+        onBack={() => setSelectedCrisisStep(null)}
+      />
+    );
+  }
+
+  // Show mitigation detail page if mitigation is selected
+  if (selectedMitigation) {
+    return (
+      <CrisisDetailPage 
+        crisisStep={selectedMitigation}
+        onBack={() => setSelectedMitigation(null)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Simulator Header */}
-      <div className="cyber-card p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="cyber-card p-6"
+      >
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-cyan-400 neon-text flex items-center">
@@ -141,7 +190,7 @@ export const CrisisSimulator = () => {
             )}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Simulation Results */}
       {result && (
@@ -185,69 +234,97 @@ export const CrisisSimulator = () => {
             </CardContent>
           </Card>
 
-          {/* Causal Tree */}
+          {/* Causal Tree - Now Clickable */}
           <Card className="cyber-card">
             <CardHeader>
               <CardTitle className="text-orange-400">
                 Crisis Pathway Analysis
+                <span className="text-sm text-muted-foreground ml-2">(Click any step for detailed analysis)</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {result.causalTree.map((step, index) => (
-                  <div key={index} className="flex items-start space-x-3">
+                  <motion.div 
+                    key={index} 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-start space-x-3 cursor-pointer"
+                    onClick={() => handleCrisisStepClick(step)}
+                  >
                     <div className="flex-shrink-0 w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center border border-orange-500/50">
                       <span className="text-sm font-mono text-orange-400">
                         {index + 1}
                       </span>
                     </div>
-                    <div className="flex-1 p-3 bg-slate-900/30 rounded-lg border border-orange-500/20">
-                      <p className="text-sm">{step}</p>
+                    <div className="flex-1 p-3 bg-slate-900/30 rounded-lg border border-orange-500/20 hover:border-orange-500/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm flex-1">{step}</p>
+                        <ExternalLink className="w-4 h-4 text-orange-400 ml-2" />
+                      </div>
                     </div>
                     {index < result.causalTree.length - 1 && (
                       <ArrowRight className="w-4 h-4 text-orange-400 mt-3" />
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Mitigation Protocol */}
+          {/* Mitigation Protocol - Now Clickable */}
           <Card className="cyber-card">
             <CardHeader>
               <CardTitle className="text-green-400">
                 AI-Generated Mitigation Protocol
+                <span className="text-sm text-muted-foreground ml-2">(Click any protocol for detailed implementation)</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-3">
                 {result.mitigationProtocol.map((protocol, index) => (
-                  <div key={index} className="p-3 bg-green-500/10 rounded-lg border border-green-500/30">
-                    <p className="text-sm text-green-400">{protocol}</p>
-                  </div>
+                  <motion.div 
+                    key={index} 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="p-3 bg-green-500/10 rounded-lg border border-green-500/30 hover:border-green-500/50 transition-colors cursor-pointer"
+                    onClick={() => handleMitigationClick(protocol)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-green-400 flex-1">{protocol}</p>
+                      <ExternalLink className="w-4 h-4 text-green-400 ml-2" />
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Sources */}
+          {/* Sources - Now Clickable */}
           <Card className="cyber-card">
             <CardHeader>
               <CardTitle className="text-cyan-400">
                 Data Sources
+                <span className="text-sm text-muted-foreground ml-2">(Click to visit source)</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {result.sources.map((source, index) => (
-                  <Badge 
+                  <motion.div
                     key={index}
-                    variant="outline"
-                    className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {source}
-                  </Badge>
+                    <Badge 
+                      variant="outline"
+                      className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover:border-cyan-500/50 cursor-pointer transition-colors"
+                      onClick={() => handleSourceClick(source)}
+                    >
+                      {source}
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </Badge>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>

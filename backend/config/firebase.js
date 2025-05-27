@@ -1,3 +1,4 @@
+
 const admin = require('firebase-admin');
 const { createLogger, format, transports } = require('winston');
 
@@ -14,25 +15,14 @@ const logger = createLogger({
         format.colorize(),
         format.simple()
       )
-    }),
-    new transports.File({ filename: 'logs/firebase-errors.log', level: 'error' }),
-    new transports.File({ filename: 'logs/firebase-combined.log' })
-  ],
-  exceptionHandlers: [
-    new transports.File({ filename: 'logs/firebase-exceptions.log' })
+    })
   ]
 });
 
+let firestoreInstance = null;
+
 // Enhanced validation with production checks
 const validateFirebaseConfig = () => {
-  // Production environment checks
-  if (process.env.NODE_ENV === 'production') {
-    if (process.env.FIREBASE_PROJECT_ID.includes('test') || 
-        process.env.FIREBASE_PROJECT_ID.includes('dev')) {
-      logger.warn('⚠️ Production environment using potentially non-production Firebase project');
-    }
-  }
-
   const requiredVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL'];
   const missing = requiredVars.filter(varName => !process.env[varName]);
   
@@ -86,25 +76,11 @@ const initializeFirebase = (retryCount = 0) => {
       credential: admin.credential.cert(serviceAccount),
       databaseURL: `https://${projectId}-default-rtdb.firebaseio.com/`,
       projectId,
-      storageBucket: `${projectId}.appspot.com`,
-      // Enable HTTP connection pooling for production
-      httpOptions: {
-        agent: new require('https').Agent({
-          keepAlive: true,
-          maxSockets: process.env.DATABASE_POOL_SIZE || 10
-        })
-      }
+      storageBucket: `${projectId}.appspot.com`
     };
 
     const app = admin.initializeApp(firebaseConfig);
     
-    // Configure Firestore for production
-    const firestore = admin.firestore();
-    firestore.settings({
-      ignoreUndefinedProperties: true,
-      timestampsInSnapshots: true
-    });
-
     logger.info('Firebase Admin SDK initialized successfully', {
       projectId,
       databaseURL: firebaseConfig.databaseURL
@@ -119,7 +95,6 @@ const initializeFirebase = (retryCount = 0) => {
       retryCount
     });
 
-    // Implement retry logic for production
     if (retryCount < 3) {
       logger.info(`Retrying Firebase initialization (attempt ${retryCount + 1})`);
       return new Promise(resolve => {
@@ -133,32 +108,24 @@ const initializeFirebase = (retryCount = 0) => {
   }
 };
 
-// Enhanced Firestore with error wrapping
+// Enhanced Firestore with single initialization
 const getFirestore = () => {
   try {
+    if (firestoreInstance) {
+      return firestoreInstance;
+    }
+
     const firebase = initializeFirebase();
-    const db = firebase.firestore();
+    firestoreInstance = firebase.firestore();
     
-    // Production performance settings
-    db.settings({
+    // Only set settings once during initialization
+    firestoreInstance.settings({
       ignoreUndefinedProperties: true,
       timestampsInSnapshots: true
     });
     
-    // Add query timeout for production
-    const originalGet = db.collectionGroup.get;
-    db.collectionGroup.get = async function(options) {
-      const timeout = process.env.REQUEST_TIMEOUT || 30000;
-      return Promise.race([
-        originalGet.call(this, options),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Firestore query timeout')), timeout)
-        )
-      ]);
-    };
-    
-    logger.debug('Firestore instance created');
-    return db;
+    logger.debug('Firestore instance created and configured');
+    return firestoreInstance;
   } catch (error) {
     logger.error('Failed to get Firestore instance', {
       error: error.message,
@@ -176,7 +143,6 @@ const testFirebaseConnection = async () => {
     const firebase = initializeFirebase();
     const db = getFirestore();
     
-    // Start timer for metrics
     const startTime = Date.now();
     
     // Test both read and write operations
@@ -219,44 +185,10 @@ const testFirebaseConnection = async () => {
   }
 };
 
-// Enhanced shutdown with cleanup
-const closeFirebaseConnections = async () => {
-  try {
-    if (admin.apps.length > 0) {
-      logger.info('Closing Firebase connections...');
-      await Promise.all(admin.apps.map(app => {
-        logger.debug(`Closing Firebase app: ${app.name}`);
-        return app.delete();
-      }));
-      logger.info('Firebase connections closed gracefully');
-    }
-  } catch (error) {
-    logger.error('Error closing Firebase connections', {
-      error: error.message,
-      stack: error.stack
-    });
-    throw error;
-  }
-};
-
-// Add process handlers for production
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received - closing Firebase connections');
-  await closeFirebaseConnections();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  logger.info('SIGINT received - closing Firebase connections');
-  await closeFirebaseConnections();
-  process.exit(0);
-});
-
 module.exports = {
   initializeFirebase,
   getFirestore,
   testFirebaseConnection,
-  closeFirebaseConnections,
   admin,
   logger
 };

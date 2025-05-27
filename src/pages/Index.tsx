@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { ThreatDashboard } from '@/components/ThreatDashboard';
 import { CrisisSimulator } from '@/components/CrisisSimulator';
-import { GlobalMap } from '@/components/GlobalMap';
+import { InteractiveGlobalMap } from '@/components/InteractiveGlobalMap';
 import { CitizenValidator } from '@/components/CitizenValidator';
 import { TrendsDashboard } from '@/components/TrendsDashboard';
 import { AdminPanel } from '@/components/AdminPanel';
@@ -37,7 +37,7 @@ const Index = () => {
       case 'simulator':
         return <CrisisSimulator />;
       case 'map':
-        return <GlobalMap threats={threats} />;
+        return <InteractiveGlobalMap threats={threats} />;
       case 'validator':
         return <CitizenValidator />;
       case 'trends':
