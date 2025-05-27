@@ -20,6 +20,7 @@ const logger = createLogger({
 });
 
 let firestoreInstance = null;
+let firebaseInitialized = false;
 
 // Enhanced validation with production checks
 const validateFirebaseConfig = () => {
@@ -57,7 +58,7 @@ const validateFirebaseConfig = () => {
 // Production-ready initialization with retry logic
 const initializeFirebase = (retryCount = 0) => {
   try {
-    if (admin.apps.length > 0) {
+    if (firebaseInitialized) {
       logger.debug('Firebase Admin SDK already initialized');
       return admin;
     }
@@ -80,6 +81,7 @@ const initializeFirebase = (retryCount = 0) => {
     };
 
     const app = admin.initializeApp(firebaseConfig);
+    firebaseInitialized = true;
     
     logger.info('Firebase Admin SDK initialized successfully', {
       projectId,
@@ -119,10 +121,12 @@ const getFirestore = () => {
     firestoreInstance = firebase.firestore();
     
     // Only set settings once during initialization
-    firestoreInstance.settings({
-      ignoreUndefinedProperties: true,
-      timestampsInSnapshots: true
-    });
+    if (!firebaseInitialized) {
+      firestoreInstance.settings({
+        ignoreUndefinedProperties: true,
+        timestampsInSnapshots: true
+      });
+    }
     
     logger.debug('Firestore instance created and configured');
     return firestoreInstance;
@@ -162,14 +166,7 @@ const testFirebaseConnection = async () => {
       document: doc.exists ? 'exists' : 'missing'
     });
     
-    return {
-      status: 'healthy',
-      latency: `${latency}ms`,
-      services: {
-        firestore: 'connected',
-        auth: 'connected'
-      }
-    };
+    return true;
   } catch (error) {
     logger.error('Firebase connection test failed', {
       error: error.message,
@@ -177,11 +174,7 @@ const testFirebaseConnection = async () => {
       stack: error.stack
     });
     
-    return {
-      status: 'unhealthy',
-      error: error.message,
-      code: error.code
-    };
+    return false;
   }
 };
 

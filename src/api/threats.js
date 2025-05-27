@@ -38,8 +38,8 @@ api.interceptors.response.use(
 );
 
 export const threatsApi = {
-  // Get all active threats - FIX: Use correct endpoint /api/threats instead of /threats
-  getAll: () => api.get('/api/threats'),
+  // Get all active threats - FIXED: Use correct endpoint /api/detect/active instead of /threats
+  getAll: () => api.get('/api/detect/active'),
   
   // Get specific threat by ID
   getById: (id) => api.get(`/api/threats/${id}`),
@@ -66,6 +66,14 @@ export const threatsApi = {
   
   // Test SIGINT scrapers
   testScraper: (scraperType) => api.post(`/api/sigint/test-${scraperType}`),
+};
+
+// Export sigintApi for compatibility
+export const sigintApi = {
+  testRssScrape: () => api.post('/api/sigint/test-rss'),
+  testApiScrape: () => api.post('/api/sigint/test-api'),
+  testHtmlScrape: () => api.post('/api/sigint/test-html'),
+  testRedditScrape: () => api.post('/api/sigint/test-reddit'),
 };
 
 export default api;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import {
   Globe
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { EnhancedCrisisDetail } from './EnhancedCrisisDetail';
 
 interface CrisisDetailPageProps {
   crisisStep: string;
@@ -58,6 +58,10 @@ interface AnalysisData {
 export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) => {
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDetailAnalysis, setSelectedDetailAnalysis] = useState<{
+    item: string;
+    type: 'root_cause' | 'escalation_factor' | 'cascading_effect' | 'historical_precedent';
+  } | null>(null);
 
   useEffect(() => {
     // Simulate AI-powered deep analysis
@@ -132,6 +136,21 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
 
     fetchDeepAnalysis();
   }, [crisisStep]);
+
+  const handleDetailAnalysis = (item: string, type: 'root_cause' | 'escalation_factor' | 'cascading_effect' | 'historical_precedent') => {
+    setSelectedDetailAnalysis({ item, type });
+  };
+
+  // Show enhanced detail analysis if selected
+  if (selectedDetailAnalysis) {
+    return (
+      <EnhancedCrisisDetail
+        crisisStep={selectedDetailAnalysis.item}
+        analysisType={selectedDetailAnalysis.type}
+        onBack={() => setSelectedDetailAnalysis(null)}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -262,19 +281,31 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
           </CardContent>
         </Card>
 
-        {/* Detailed Analysis Sections */}
+        {/* Detailed Analysis Sections - NOW CLICKABLE */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Root Causes */}
           <Card className="cyber-card">
             <CardHeader>
-              <CardTitle className="text-orange-400">Root Causes Analysis</CardTitle>
+              <CardTitle className="text-orange-400">
+                Root Causes Analysis
+                <span className="text-sm text-muted-foreground ml-2">(Click for Sonar AI Analysis)</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {analysis.detailedAnalysis.root_causes.map((cause: string, index: number) => (
-                  <div key={index} className="p-3 bg-orange-500/10 rounded-lg border border-orange-500/30">
-                    <p className="text-sm">{cause}</p>
-                  </div>
+                  <motion.div 
+                    key={index}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="p-3 bg-orange-500/10 rounded-lg border border-orange-500/30 hover:border-orange-500/50 transition-colors cursor-pointer"
+                    onClick={() => handleDetailAnalysis(cause, 'root_cause')}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm flex-1">{cause}</p>
+                      <Brain className="w-4 h-4 text-orange-400 ml-2" />
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
@@ -283,14 +314,26 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
           {/* Escalation Factors */}
           <Card className="cyber-card">
             <CardHeader>
-              <CardTitle className="text-red-400">Escalation Factors</CardTitle>
+              <CardTitle className="text-red-400">
+                Escalation Factors
+                <span className="text-sm text-muted-foreground ml-2">(Click for Sonar AI Analysis)</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {analysis.detailedAnalysis.escalation_factors.map((factor: string, index: number) => (
-                  <div key={index} className="p-3 bg-red-500/10 rounded-lg border border-red-500/30">
-                    <p className="text-sm">{factor}</p>
-                  </div>
+                  <motion.div 
+                    key={index}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="p-3 bg-red-500/10 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-colors cursor-pointer"
+                    onClick={() => handleDetailAnalysis(factor, 'escalation_factor')}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm flex-1">{factor}</p>
+                      <Brain className="w-4 h-4 text-red-400 ml-2" />
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
@@ -299,14 +342,26 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
           {/* Cascading Effects */}
           <Card className="cyber-card">
             <CardHeader>
-              <CardTitle className="text-yellow-400">Cascading Effects</CardTitle>
+              <CardTitle className="text-yellow-400">
+                Cascading Effects
+                <span className="text-sm text-muted-foreground ml-2">(Click for Sonar AI Analysis)</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {analysis.detailedAnalysis.cascading_effects.map((effect: string, index: number) => (
-                  <div key={index} className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                    <p className="text-sm">{effect}</p>
-                  </div>
+                  <motion.div 
+                    key={index}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30 hover:border-yellow-500/50 transition-colors cursor-pointer"
+                    onClick={() => handleDetailAnalysis(effect, 'cascading_effect')}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm flex-1">{effect}</p>
+                      <Brain className="w-4 h-4 text-yellow-400 ml-2" />
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
@@ -315,14 +370,26 @@ export const CrisisDetailPage = ({ crisisStep, onBack }: CrisisDetailPageProps) 
           {/* Historical Precedents */}
           <Card className="cyber-card">
             <CardHeader>
-              <CardTitle className="text-purple-400">Historical Precedents</CardTitle>
+              <CardTitle className="text-purple-400">
+                Historical Precedents
+                <span className="text-sm text-muted-foreground ml-2">(Click for Sonar AI Analysis)</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {analysis.detailedAnalysis.historical_precedents.map((precedent: string, index: number) => (
-                  <div key={index} className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30">
-                    <p className="text-sm">{precedent}</p>
-                  </div>
+                  <motion.div 
+                    key={index}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
+                    onClick={() => handleDetailAnalysis(precedent, 'historical_precedent')}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm flex-1">{precedent}</p>
+                      <Brain className="w-4 h-4 text-purple-400 ml-2" />
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
