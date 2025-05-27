@@ -14,7 +14,6 @@ try {
 }
 
 const app = express();
-const port = process.env.PORT || 5000;
 
 // Enable CORS
 app.use(cors());
@@ -71,13 +70,5 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`🌍 Global Sentinel Backend running on port ${port}`);
-  console.log('🚀 Earth\'s AI Immune System is ACTIVE');
-  console.log('📡 Monitoring global threats in real-time...');
-  console.log(`🌐 Frontend URL: http://localhost:8080`);
-  console.log('💡 Create a .env file with Firebase credentials to enable database features');
-});
-
+// Export app without starting the server (server.js will handle that)
 module.exports = app;
