@@ -22,7 +22,7 @@ class SonarAnalysisService {
         analysisType
       });
       
-      if (response.data.success) {
+      if (response.data) {
         return {
           success: true,
           analysis: response.data.analysis,

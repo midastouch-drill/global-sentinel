@@ -113,4 +113,26 @@ export const threatsApi = {
   }
 };
 
+export const sigintApi = {
+  testRssScrape: async () => {
+    const response = await api.post('/api/sigint/test-rss');
+    return response;
+  },
+
+  testApiScrape: async () => {
+    const response = await api.post('/api/sigint/test-api');
+    return response;
+  },
+
+  testHtmlScrape: async () => {
+    const response = await api.post('/api/sigint/test-html');
+    return response;
+  },
+
+  testRedditScrape: async () => {
+    const response = await api.post('/api/sigint/test-reddit');
+    return response;
+  },
+};
+
 export default threatsApi;
