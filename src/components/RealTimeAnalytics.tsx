@@ -109,6 +109,12 @@ const RealTimeAnalytics = () => {
     threats.reduce((sum: number, threat: any) => sum + threat.severity, 0) / threats.length || 0
   );
 
+  // Custom label function with proper typing
+  const renderCustomLabel = (entry: any): string => {
+    const percentage = Math.round((entry.value / threats.length) * 100);
+    return `${entry.name}: ${percentage}%`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -274,7 +280,7 @@ const RealTimeAnalytics = () => {
                     innerRadius={60}
                     outerRadius={120}
                     dataKey="value"
-                    label={({ name, percentage }) => `${name}: ${percentage}%`}
+                    label={renderCustomLabel}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
