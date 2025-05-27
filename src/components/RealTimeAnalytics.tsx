@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,12 +109,6 @@ const RealTimeAnalytics = () => {
   const globalRiskIndex = Math.round(
     threats.reduce((sum: number, threat: any) => sum + threat.severity, 0) / threats.length || 0
   );
-
-  // Custom label function with proper typing for PieChart
-  const renderCustomLabel = (entry: any) => {
-    const percentage = Math.round((entry.value / threats.length) * 100);
-    return `${entry.name}: ${percentage}%`;
-  };
 
   return (
     <div className="space-y-6">
@@ -280,8 +275,6 @@ const RealTimeAnalytics = () => {
                     innerRadius={60}
                     outerRadius={120}
                     dataKey="value"
-                    labelLine={false}
-                    label={renderCustomLabel}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
