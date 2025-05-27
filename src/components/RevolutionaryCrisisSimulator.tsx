@@ -92,13 +92,13 @@ export const RevolutionaryCrisisSimulator = ({ onStepAnalyze }: RevolutionaryCri
     }
 
     try {
-      const simulationData = await simulateMutation.mutateAsync({ scenario });
-      setResult(simulationData.simulation);
+      const response = await simulateMutation.mutateAsync({ scenario });
+      setResult(response.data.simulation || response.data);
       setSimulationStage('results');
       
       toast({
         title: "✅ Simulation Complete",
-        description: `Crisis pathway mapped with ${simulationData.simulation.confidence}% confidence`,
+        description: `Crisis pathway mapped with ${(response.data.simulation || response.data).confidence}% confidence`,
       });
     } catch (error) {
       console.error('Simulation error:', error);

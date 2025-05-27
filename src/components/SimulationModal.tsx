@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   AlertDialog,
@@ -23,14 +22,12 @@ interface SimulationModalProps {
 
 const SimulationModal: React.FC<SimulationModalProps> = ({ isOpen, onClose, threat }) => {
   const [scenario, setScenario] = useState(threat?.title || '');
-  const [parameters, setParameters] = useState('');
   const simulateMutation = useSimulate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     simulateMutation.mutate({
-      scenario: scenario,
-      parameters: parameters
+      scenario: scenario
     });
     onClose();
   };
@@ -41,7 +38,7 @@ const SimulationModal: React.FC<SimulationModalProps> = ({ isOpen, onClose, thre
         <AlertDialogHeader>
           <AlertDialogTitle>Simulate Threat Scenario</AlertDialogTitle>
           <AlertDialogDescription>
-            Enter the scenario and parameters to simulate a threat.
+            Enter the scenario to simulate a threat.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
@@ -53,16 +50,6 @@ const SimulationModal: React.FC<SimulationModalProps> = ({ isOpen, onClose, thre
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
               placeholder="e.g., Cyber Attack on Financial Infrastructure"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="parameters">Parameters</Label>
-            <Input
-              type="text"
-              id="parameters"
-              value={parameters}
-              onChange={(e) => setParameters(e.target.value)}
-              placeholder="e.g., {'attack_vector': 'ddos', 'target': 'banking_sector'}"
             />
           </div>
           <AlertDialogFooter>

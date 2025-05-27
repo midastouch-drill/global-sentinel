@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,8 +83,7 @@ const SimulationLab = () => {
     
     try {
       const response = await simulateMutation.mutateAsync({
-        scenario,
-        parameters: { analysisDepth: 'comprehensive' }
+        scenario
       });
       
       setSimulationResult(response.data.result);

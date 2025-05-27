@@ -1,7 +1,6 @@
-
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { threatsApi } from '../api/threats';
-import { useState } from 'react';
 
 export const useThreats = (page = 1, limit = 10) => {
   return useQuery({

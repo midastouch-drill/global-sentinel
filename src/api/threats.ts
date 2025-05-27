@@ -29,6 +29,19 @@ export const threatsApi = {
   
   analyze: (analysisData: { step: string; type: string }) =>
     api.post('/analyze', analysisData),
+
+  analyzeCrisis: (analysisData: { scenario: string; analysisType: string }) =>
+    api.post('/crisis/analyze', analysisData),
+
+  deepAnalysis: (analysisData: { crisisStep: string; analysisType: string }) =>
+    api.post('/crisis/deep-analysis', analysisData),
+};
+
+export const sigintApi = {
+  testRssScrape: () => api.post('/sigint/test-rss-scrape'),
+  testApiScrape: () => api.post('/sigint/test-api-scrape'),
+  testHtmlScrape: () => api.post('/sigint/test-html-scrape'),
+  testRedditScrape: () => api.post('/sigint/test-reddit-scrape'),
 };
 
 export default threatsApi;
