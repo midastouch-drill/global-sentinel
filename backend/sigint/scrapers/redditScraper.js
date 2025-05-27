@@ -62,11 +62,11 @@ class RedditScraper {
   }
 
   async forwardToDetect(threats) {
-    const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:3000';
+    const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:5000';
     
     for (const threat of threats) {
       try {
-        await axios.post(`${coreUrl}/api/detect`, threat, {
+        await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
           timeout: 5000,
           headers: { 'Content-Type': 'application/json' }
         });

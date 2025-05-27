@@ -92,7 +92,7 @@ class APIScraper {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const response = await axios.post(`${coreUrl}/api/detect`, threat, {
+        const response = await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
           timeout: 10000,
           headers: { 'Content-Type': 'application/json' }
         });

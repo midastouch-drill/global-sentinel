@@ -80,6 +80,66 @@ class DetectionController {
     }
   }
 
+  static async ingestThreat(req, res) {
+    try {
+      console.log('📥 Threat ingestion from scraper');
+      
+      const threat = req.body;
+      
+      // Validate threat data
+      if (!threat.title || !threat.type || !threat.severity) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid threat data - missing required fields'
+        });
+      }
+
+      // Test Firebase connection
+      const firebaseHealthy = await testFirebaseConnection();
+      if (!firebaseHealthy) {
+        console.warn('⚠️ Firebase unavailable, accepting threat but not storing');
+        return res.json({
+          success: true,
+          message: 'Threat received but Firebase unavailable',
+          firebaseHealthy: false
+        });
+      }
+
+      const db = getFirestore();
+      
+      // Add metadata to threat
+      const processedThreat = {
+        ...threat,
+        id: threat.id || uuidv4(),
+        timestamp: new Date().toISOString(),
+        status: 'active',
+        votes: { confirm: 0, deny: 0, skeptical: 0 },
+        source: 'scraper'
+      };
+
+      // Store in Firestore
+      const threatRef = db.collection('threats').doc(processedThreat.id);
+      await threatRef.set(processedThreat);
+      
+      console.log(`✅ Threat ingested: ${processedThreat.title}`);
+      
+      res.json({
+        success: true,
+        message: 'Threat successfully ingested',
+        threatId: processedThreat.id,
+        firebaseHealthy: true
+      });
+      
+    } catch (error) {
+      console.error('🚨 Threat ingestion error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to ingest threat',
+        message: error.message
+      });
+    }
+  }
+
   static async handleFirebaseFailure(res, error = null) {
     console.log('🔄 Running in fallback mode without Firebase...');
     

@@ -18,6 +18,7 @@ const simulateRoutes = require('./routes/simulate');
 const verifyRoutes = require('./routes/verify');
 const voteRoutes = require('./routes/vote');
 const trendsRoutes = require('./routes/trends');
+const sigintRoutes = require('./routes/sigint');
 
 const app = express();
 
@@ -86,6 +87,7 @@ app.get('/health/firebase', async (req, res) => {
 
 // Public routes (no authentication required)
 app.use('/api/trends', optionalAuth, trendsRoutes);
+app.use('/api/sigint', sigintRoutes); // SIGINT routes are public for scraper access
 
 // Protected routes (authentication required)
 app.use('/api/detect', verifyFirebaseToken, detectionRoutes);
