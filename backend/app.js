@@ -33,6 +33,8 @@ app.use('/api/simulate', require('./routes/simulate'));
 app.use('/api/simulation', require('./routes/simulation'));
 app.use('/api/vote', require('./routes/vote'));
 app.use('/api/verify', require('./routes/verify'));
+app.use('/api/trends', require('./routes/trends'));
+app.use('/api/health', require('./routes/health'));
 
 // Health check
 app.get('/api/health', (req, res) => {

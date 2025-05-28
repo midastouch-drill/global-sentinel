@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -12,22 +13,22 @@ export const threatsApi = {
     api.get(`/detect/threats?page=${page}&limit=${limit}`),
   
   getById: (id: string) => 
-    api.get(`/threats/${id}`),
+    api.get(`/detect/threats/${id}`),
   
   getTrends: () => 
-    api.get('/threats/trends'),
+    api.get('/trends'),
   
   vote: (voteData: { threatId: string; vote: 'credible' | 'not_credible'; userId?: string }) =>
-    api.post('/crisis/vote', voteData),
+    api.post('/vote', voteData),
   
   verify: (verifyData: { threatId?: string; claim: string; userId?: string }) =>
-    api.post('/crisis/verify', verifyData),
+    api.post('/verify', verifyData),
   
   simulate: (simulationData: { scenario: string }) =>
-    api.post('/crisis/simulate', simulationData),
+    api.post('/simulate', simulationData),
   
   analyze: (analysisData: { step: string; type: string }) =>
-    api.post('/analyze', analysisData),
+    api.post('/crisis/analyze', analysisData),
 
   analyzeCrisis: (analysisData: { scenario: string; analysisType: string }) =>
     api.post('/crisis/analyze', analysisData),

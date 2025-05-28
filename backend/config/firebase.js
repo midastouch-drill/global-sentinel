@@ -97,9 +97,11 @@ const initializeFirebase = (retryCount = 0) => {
       retryCount
     });
 
-    // In demo mode, don't retry
-    if (isDemoMode) {
-      logger.info('Continuing in demo mode...');
+    // Force demo mode on connection failure
+    if (retryCount >= 2) {
+      logger.warn('🚧 Forcing demo mode due to Firebase connection issues');
+      isDemoMode = true;
+      firebaseInitialized = true;
       return null;
     }
 
@@ -130,9 +132,24 @@ const getFirestore = () => {
             delete: () => Promise.resolve()
           }),
           add: (data) => Promise.resolve({ id: 'mock_id' }),
-          where: () => ({ get: () => Promise.resolve({ docs: [] }) }),
-          orderBy: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }),
-          limit: () => ({ get: () => Promise.resolve({ docs: [] }) })
+          where: () => ({
+            orderBy: () => ({
+              limit: () => ({
+                get: () => Promise.resolve({ docs: [], forEach: () => {} })
+              })
+            }),
+            get: () => Promise.resolve({ docs: [], forEach: () => {} })
+          }),
+          orderBy: () => ({
+            limit: () => ({
+              get: () => Promise.resolve({ docs: [], forEach: () => {} })
+            }),
+            get: () => Promise.resolve({ docs: [], forEach: () => {} })
+          }),
+          limit: () => ({
+            get: () => Promise.resolve({ docs: [], forEach: () => {} })
+          }),
+          get: () => Promise.resolve({ docs: [], forEach: () => {} })
         })
       };
     }
@@ -163,7 +180,11 @@ const getFirestore = () => {
       error: error.message,
       stack: error.stack
     });
-    throw error;
+    
+    // Fallback to demo mode
+    logger.warn('🚧 Falling back to demo mode');
+    isDemoMode = true;
+    return getFirestore(); // Recursive call with demo mode enabled
   }
 };
 
