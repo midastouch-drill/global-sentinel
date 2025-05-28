@@ -235,7 +235,7 @@ export const OpenStreetMap: React.FC<ThreatMapProps> = ({ threats = [] }) => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 rounded-full bg-cyan-500"></div>
-                  <span className="text-xs text-muted-foreground">Low (<40)</span>
+                  <span className="text-xs text-muted-foreground">Low (&lt;40)</span>
                 </div>
               </div>
             </div>
@@ -280,7 +280,7 @@ export const OpenStreetMap: React.FC<ThreatMapProps> = ({ threats = [] }) => {
       </Card>
       
       {/* Custom CSS for map styling */}
-      <style jsx global>{`
+      <style>{`
         .custom-threat-marker {
           background: transparent !important;
           border: none !important;

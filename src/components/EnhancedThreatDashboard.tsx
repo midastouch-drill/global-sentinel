@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import EnhancedThreatCard from './EnhancedThreatCard';
 import { OpenStreetMap } from './OpenStreetMap';
 import { ThreatChart } from './ThreatChart';
-import { SimulationModal } from './SimulationModal';
+import SimulationModal from './SimulationModal';
 
 export const EnhancedThreatDashboard = () => {
   const [selectedThreat, setSelectedThreat] = useState(null);
@@ -142,7 +142,8 @@ export const EnhancedThreatDashboard = () => {
             <div className="text-sm text-muted-foreground">High Priority</div>
             <Progress value={(highThreats.length / Math.max(threats.length, 1)) * 100} className="h-1 mt-2" />
           </div>
-          <div className="text-3xl font-mono text-cyan-400 mb-1">{threats.length}</div>
+          <div className="text-center p-4 bg-slate-900/50 rounded-lg border border-cyan-500/20">
+            <div className="text-3xl font-mono text-cyan-400 mb-1">{threats.length}</div>
             <div className="text-sm text-muted-foreground">Total Active</div>
             <Progress value={100} className="h-1 mt-2" />
           </div>
