@@ -9,13 +9,21 @@ const { initializeSampleThreats, testFirebaseConnection } = require('./config/fi
 
 const app = express();
 
-// Middleware
+// Enhanced CORS configuration to fix frontend connection issues
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourproductiondomain.com'] 
-    : ['http://localhost:8080', 'http://localhost:3000'],
-  credentials: true
+  origin: [
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
