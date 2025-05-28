@@ -30,9 +30,9 @@ export const EnhancedThreatDashboard = () => {
 
   // Filter threats
   const filteredThreats = threats.filter(threat => {
-    const matchesSearch = threat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         threat.summary.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || threat.type.toLowerCase() === filterType.toLowerCase();
+    const matchesSearch = threat.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         threat.summary?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || threat.type?.toLowerCase() === filterType.toLowerCase();
     return matchesSearch && matchesType;
   });
 
@@ -44,7 +44,14 @@ export const EnhancedThreatDashboard = () => {
     setDisplayCount(prev => Math.min(prev + 10, filteredThreats.length));
   };
 
-  const threatTypes = ['all', ...Array.from(new Set(threats.map(t => t.type)))];
+  // Extract unique threat types and ensure they are strings
+  const uniqueTypes = Array.from(new Set(
+    threats
+      .map(t => t.type)
+      .filter((type): type is string => typeof type === 'string' && type.length > 0)
+  ));
+  
+  const threatTypes: string[] = ['all', ...uniqueTypes];
 
   const getSeverityColor = (severity: number) => {
     if (severity >= 80) return 'text-red-400';
