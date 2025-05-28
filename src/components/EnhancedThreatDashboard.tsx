@@ -34,11 +34,11 @@ export const EnhancedThreatDashboard = () => {
     setDisplayCount(prev => Math.min(prev + 10, filteredThreats.length));
   };
 
-  // Extract unique threat types and ensure they are strings
+  // Extract unique threat types with proper type checking
   const uniqueTypes = Array.from(new Set(
     threats
-      .filter((t): t is typeof t & { type: string } => typeof t.type === 'string' && t.type.length > 0)
       .map(t => t.type)
+      .filter((type): type is string => typeof type === 'string' && type.length > 0)
   ));
   
   const threatTypes: string[] = ['all', ...uniqueTypes];
