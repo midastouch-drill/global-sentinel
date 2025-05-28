@@ -10,11 +10,11 @@ class ThreatIntelligenceScheduler {
   }
 
   start() {
-    logger.info('🕐 Starting 12-hour intelligent threat scraping schedule');
+    logger.info('🕐 Starting intelligent threat scraping schedule');
 
-    // Every 12 hours at 6 AM and 6 PM UTC
-    const mainScrapeJob = cron.schedule('0 6,18 * * *', async () => {
-      logger.info('⏰ 12-hour scrape cycle triggered');
+    // More frequent scraping for development - every 5 minutes
+    const mainScrapeJob = cron.schedule('*/5 * * * *', async () => {
+      logger.info('⏰ Periodic scrape cycle triggered');
       await smartScrapingService.runIntelligentScrape();
     }, {
       scheduled: false,
@@ -39,11 +39,11 @@ class ThreatIntelligenceScheduler {
     
     logger.info('✅ Threat intelligence scheduler activated');
     
-    // Run initial scrape after 10 seconds
+    // Run initial scrape after 30 seconds to allow backend to start
     setTimeout(async () => {
-      logger.info('🎯 Running initial intelligence gather...');
+      logger.info('🎯 Running initial intelligence gathering...');
       await smartScrapingService.runIntelligentScrape();
-    }, 10000);
+    }, 30000);
   }
 
   stop() {

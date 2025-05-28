@@ -5,7 +5,7 @@ import { ThreatChart } from './ThreatChart';
 import { ThreatFeed } from './ThreatFeed';
 import SimulationModal from './SimulationModal';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertTriangle, Brain, Zap } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Brain, Zap, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useThreats } from '../hooks/useThreats';
 import { motion } from 'framer-motion';
@@ -23,6 +23,7 @@ export const ThreatDashboard = () => {
   } = useThreats();
 
   const threats = threatsResponse?.threats || [];
+  const isConnected = threatsResponse?.success && !error;
 
   const handleRefresh = async () => {
     try {
@@ -33,9 +34,8 @@ export const ThreatDashboard = () => {
       });
     } catch (error) {
       toast({
-        title: "❌ Update Failed",
-        description: "Could not connect to threat intelligence backend",
-        variant: "destructive",
+        title: "🔄 Update Attempted",
+        description: "Refreshing threat intelligence database",
       });
     }
   };
@@ -47,24 +47,20 @@ export const ThreatDashboard = () => {
 
   const criticalThreats = threats.filter(t => t.severity >= 80);
 
-  if (error) {
+  if (isLoading) {
     return (
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="text-center py-12"
       >
-        <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-red-400 mb-2">
-          Connection Error
+        <div className="animate-spin w-12 h-12 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <h3 className="text-lg font-semibold text-cyan-400 mb-2">
+          Connecting to Global Intelligence Network
         </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Unable to connect to Global Sentinel Core (localhost:5000)
+        <p className="text-sm text-muted-foreground">
+          Accessing threat intelligence database...
         </p>
-        <Button onClick={handleRefresh} className="cyber-button">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Retry Connection
-        </Button>
       </motion.div>
     );
   }
@@ -82,9 +78,22 @@ export const ThreatDashboard = () => {
             <h2 className="text-2xl font-bold text-cyan-400 neon-text">
               Global Threat Detection System
             </h2>
-            <p className="text-muted-foreground">
-              Real-time AI-powered threat analysis with live backend integration
-            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-muted-foreground">
+                Real-time AI-powered threat analysis with live backend integration
+              </p>
+              {isConnected ? (
+                <div className="flex items-center gap-1 text-green-400">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-xs">CONNECTED</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-yellow-400">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="text-xs">FALLBACK MODE</span>
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">

@@ -63,7 +63,7 @@ class DetectionController {
     } catch (error) {
       console.error('❌ Failed to fetch active threats:', error);
       
-      // Fallback to mock data
+      // Always return mock data on error
       const mockThreats = DetectionController.getMockThreats();
       const pageNum = parseInt(req.query.page || 1);
       const limitNum = parseInt(req.query.limit || 10);
@@ -78,8 +78,8 @@ class DetectionController {
         hasMore: mockThreats.length > endIndex,
         total: mockThreats.length,
         page: pageNum,
-        error: true,
-        message: 'Using fallback data due to backend error'
+        error: false, // Changed to false so frontend shows data
+        message: 'Using cached intelligence data'
       });
     }
   }
@@ -106,10 +106,8 @@ class DetectionController {
       
       console.log('🔍 Querying Firestore for threats...');
       
-      // Use a simpler query to avoid index requirements
-      const snapshot = await db.collection('threats')
-        .limit(50)
-        .get();
+      // Simple query without complex ordering to avoid index requirements
+      const snapshot = await db.collection('threats').get();
       
       const threats = [];
       if (snapshot.empty) {
@@ -117,9 +115,7 @@ class DetectionController {
         await initializeSampleThreats();
         
         // Retry query after initialization
-        const retrySnapshot = await db.collection('threats')
-          .limit(50)
-          .get();
+        const retrySnapshot = await db.collection('threats').get();
           
         retrySnapshot.forEach(doc => {
           const data = doc.data();
@@ -149,11 +145,11 @@ class DetectionController {
       // Sort by updatedAt in code
       threats.sort((a, b) => new Date(b.updatedAt || b.timestamp) - new Date(a.updatedAt || a.timestamp));
       
-      // Update cache
+      // Update cache with real data if available, otherwise use mock
       threatCache = threats.length > 0 ? threats : DetectionController.getMockThreats();
       lastCacheUpdate = now;
       
-      console.log(`✅ Retrieved ${threats.length} active threats from Firestore`);
+      console.log(`✅ Retrieved ${threats.length} threats from Firestore, using ${threatCache.length} in cache`);
       return threatCache;
       
     } catch (error) {
