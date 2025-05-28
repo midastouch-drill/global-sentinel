@@ -5,7 +5,7 @@ const path = require('path');
 require('dotenv').config();
 
 // Initialize Firebase first
-require('./config/firebase');
+const { initializeSampleThreats, testFirebaseConnection } = require('./config/firebase');
 
 const app = express();
 
@@ -35,15 +35,25 @@ app.use('/api/vote', require('./routes/vote'));
 app.use('/api/verify', require('./routes/verify'));
 app.use('/api/trends', require('./routes/trends'));
 app.use('/api/health', require('./routes/health'));
+app.use('/api/sigint', require('./routes/sigint'));
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  const firebaseStatus = await testFirebaseConnection();
+  
   res.json({ 
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    message: 'Global Sentinel Core API is operational'
+    message: 'Global Sentinel Core API is operational',
+    firebase: firebaseStatus ? 'connected' : 'mock_mode'
   });
 });
+
+// Initialize sample data on startup
+setTimeout(async () => {
+  console.log('🎯 Initializing sample threats...');
+  await initializeSampleThreats();
+}, 5000);
 
 // 404 handler
 app.use('/api/*', (req, res) => {

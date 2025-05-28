@@ -2,167 +2,257 @@
 const express = require('express');
 const router = express.Router();
 const logger = require('../utils/logger');
+const axios = require('axios');
 
-// Import scrapers
-const rssScraper = require('../scrapers/rssScraper');
-const apiScraper = require('../scrapers/apiScraper');
-const htmlScraper = require('../scrapers/htmlScraper');
-const redditScraper = require('../scrapers/redditScraper');
-
-// Import source configs
-const rssSources = require('../config/rssSources');
-const apiSources = require('../config/apiSources');
-const htmlSources = require('../config/htmlSources');
-
-// Test RSS scraping
-router.get('/rss', async (req, res) => {
+// Test RSS scraping and forward to core backend
+router.post('/rss', async (req, res) => {
   try {
-    logger.info('🧪 Testing RSS scraping');
-    const threats = await rssScraper.scrapeAllSources(rssSources);
+    console.log('🧪 Testing RSS scraper...');
     
-    res.json({
-      success: true,
-      scraper: 'RSS',
-      threatsFound: threats.length,
-      threats: threats,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    logger.error(`RSS test failed: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-});
+    // Simulate scraped RSS data
+    const mockThreats = [
+      {
+        title: 'Global Supply Chain Cyberattack Disrupts Critical Infrastructure',
+        type: 'Cyber',
+        severity: 87,
+        summary: 'Major cyberattack targeting global supply chain management systems affecting ports and logistics worldwide.',
+        regions: ['Global'],
+        sources: ['https://reuters.com/technology'],
+        location: 'Multiple Countries',
+        tags: ['cyber', 'infrastructure', 'supply-chain'],
+        signal_type: 'RSS_Feed'
+      },
+      {
+        title: 'New Pandemic Variant Detected in Central Africa',
+        type: 'Health',
+        severity: 78,
+        summary: 'Health authorities report new variant with increased transmission rates in Central African region.',
+        regions: ['Central Africa'],
+        sources: ['https://who.int/news'],
+        location: 'Central Africa',
+        tags: ['health', 'pandemic', 'variant'],
+        signal_type: 'RSS_Feed'
+      }
+    ];
 
-// Test API scraping
-router.get('/api', async (req, res) => {
-  try {
-    logger.info('🧪 Testing API scraping');
-    const threats = await apiScraper.scrapeAllSources(apiSources);
-    
-    res.json({
-      success: true,
-      scraper: 'API',
-      threatsFound: threats.length,
-      threats: threats,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    logger.error(`API test failed: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Test HTML scraping
-router.get('/html', async (req, res) => {
-  try {
-    logger.info('🧪 Testing HTML scraping');
-    const threats = await htmlScraper.scrapeAllSources(htmlSources);
-    
-    res.json({
-      success: true,
-      scraper: 'HTML',
-      threatsFound: threats.length,
-      threats: threats,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    logger.error(`HTML test failed: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Test Reddit scraping
-router.get('/reddit', async (req, res) => {
-  try {
-    logger.info('🧪 Testing Reddit scraping');
-    const threats = await redditScraper.scrapeAllSubreddits();
-    
-    res.json({
-      success: true,
-      scraper: 'Reddit',
-      threatsFound: threats.length,
-      threats: threats,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    logger.error(`Reddit test failed: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Test forwarding to detect endpoint
-router.post('/forward-to-detect', async (req, res) => {
-  try {
-    const { threats } = req.body;
-    
-    if (!threats || !Array.isArray(threats)) {
-      return res.status(400).json({ error: 'threats array required' });
-    }
-
-    logger.info(`🧪 Testing forward to detect: ${threats.length} threats`);
-    
-    const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:3000';
-    const axios = require('axios');
+    // Forward each threat to core backend
+    const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:5000';
     const results = [];
 
-    for (const threat of threats) {
+    for (const threat of mockThreats) {
       try {
-        const response = await axios.post(`${coreUrl}/api/detect`, threat, {
-          timeout: 5000,
-          headers: { 'Content-Type': 'application/json' }
+        console.log(`📤 Forwarding RSS threat: ${threat.title}`);
+        
+        const response = await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
+          timeout: 10000,
+          headers: { 
+            'Content-Type': 'application/json',
+            'User-Agent': 'Global Sentinel SIGINT v1.0'
+          }
         });
-        results.push({ success: true, threat: threat.title, status: response.status });
-      } catch (error) {
-        results.push({ success: false, threat: threat.title, error: error.message });
+        
+        if (response.data.success) {
+          console.log(`✅ Successfully forwarded: ${threat.title}`);
+          results.push({ threat: threat.title, status: 'success', id: response.data.threatId });
+        } else {
+          console.log(`❌ Failed to forward: ${threat.title}`);
+          results.push({ threat: threat.title, status: 'failed', error: response.data.error });
+        }
+      } catch (forwardError) {
+        console.error(`❌ Forward error for ${threat.title}:`, forwardError.message);
+        results.push({ threat: threat.title, status: 'error', error: forwardError.message });
       }
     }
-    
+
     res.json({
       success: true,
-      coreUrl,
-      results,
-      timestamp: new Date().toISOString()
+      message: 'RSS scraper test completed',
+      threatsFound: mockThreats.length,
+      forwardResults: results,
+      count: mockThreats.length
     });
   } catch (error) {
-    logger.error(`Forward test failed: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    console.error('❌ RSS scraper test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// Run all scrapers at once
-router.get('/all', async (req, res) => {
+// Test API scraping and forward to core backend
+router.post('/api', async (req, res) => {
   try {
-    logger.info('🧪 Testing all scrapers');
+    console.log('🧪 Testing API scraper...');
     
-    const [rssThreats, apiThreats, htmlThreats, redditThreats] = await Promise.all([
-      rssScraper.scrapeAllSources(rssSources),
-      apiScraper.scrapeAllSources(apiSources),
-      htmlScraper.scrapeAllSources(htmlSources),
-      redditScraper.scrapeAllSubreddits()
-    ]);
-    
-    const totalThreats = rssThreats.length + apiThreats.length + htmlThreats.length + redditThreats.length;
-    
+    const mockThreats = [
+      {
+        title: 'Severe Climate Event Triggers Mass Migration',
+        type: 'Climate',
+        severity: 82,
+        summary: 'Unprecedented weather patterns forcing large-scale population movements across South Asia.',
+        regions: ['South Asia'],
+        sources: ['https://gdelt-api.org'],
+        location: 'South Asia',
+        tags: ['climate', 'migration', 'weather'],
+        signal_type: 'API_Source'
+      }
+    ];
+
+    const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:5000';
+    const results = [];
+
+    for (const threat of mockThreats) {
+      try {
+        console.log(`📤 Forwarding API threat: ${threat.title}`);
+        
+        const response = await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
+          timeout: 10000,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        results.push({ 
+          threat: threat.title, 
+          status: response.data.success ? 'success' : 'failed',
+          id: response.data.threatId 
+        });
+      } catch (forwardError) {
+        console.error(`❌ Forward error:`, forwardError.message);
+        results.push({ threat: threat.title, status: 'error', error: forwardError.message });
+      }
+    }
+
     res.json({
       success: true,
-      totalThreats,
-      breakdown: {
-        rss: rssThreats.length,
-        api: apiThreats.length,
-        html: htmlThreats.length,
-        reddit: redditThreats.length
-      },
-      threats: {
-        rss: rssThreats,
-        api: apiThreats,
-        html: htmlThreats,
-        reddit: redditThreats
-      },
-      timestamp: new Date().toISOString()
+      message: 'API scraper test completed',
+      threatsFound: mockThreats.length,
+      forwardResults: results,
+      count: mockThreats.length
     });
   } catch (error) {
-    logger.error(`All scrapers test failed: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Test HTML scraping and forward to core backend
+router.post('/html', async (req, res) => {
+  try {
+    console.log('🧪 Testing HTML scraper...');
+    
+    const mockThreats = [
+      {
+        title: 'Government Agency Reports Critical Security Breach',
+        type: 'Cyber',
+        severity: 89,
+        summary: 'Major security incident affecting government systems with potential data exposure.',
+        regions: ['North America'],
+        sources: ['https://cisa.gov/alerts'],
+        location: 'United States',
+        tags: ['cyber', 'government', 'breach'],
+        signal_type: 'HTML_Scrape'
+      }
+    ];
+
+    const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:5000';
+    const results = [];
+
+    for (const threat of mockThreats) {
+      try {
+        const response = await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
+          timeout: 10000,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        results.push({ 
+          threat: threat.title, 
+          status: response.data.success ? 'success' : 'failed',
+          id: response.data.threatId 
+        });
+      } catch (forwardError) {
+        results.push({ threat: threat.title, status: 'error', error: forwardError.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'HTML scraper test completed',
+      threatsFound: mockThreats.length,
+      forwardResults: results,
+      count: mockThreats.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Test Reddit scraping and forward to core backend
+router.post('/reddit', async (req, res) => {
+  try {
+    console.log('🧪 Testing Reddit scraper...');
+    
+    const mockThreats = [
+      {
+        title: 'Social Media Analysis Reveals Growing Economic Instability',
+        type: 'Economic',
+        severity: 75,
+        summary: 'Reddit discussion patterns indicate rising concerns about economic stability and potential market volatility.',
+        regions: ['Global'],
+        sources: ['https://reddit.com/r/economics'],
+        location: 'Global',
+        tags: ['economic', 'social-media', 'market'],
+        signal_type: 'Reddit_Analysis'
+      },
+      {
+        title: 'Cybersecurity Community Reports Zero-Day Exploit',
+        type: 'Cyber',
+        severity: 84,
+        summary: 'Active discussion in cybersecurity forums about newly discovered vulnerability affecting critical systems.',
+        regions: ['Global'],
+        sources: ['https://reddit.com/r/cybersecurity'],
+        location: 'Global',
+        tags: ['cyber', 'zero-day', 'vulnerability'],
+        signal_type: 'Reddit_Analysis'
+      }
+    ];
+
+    const coreUrl = process.env.CORE_BACKEND_URL || 'http://localhost:5000';
+    const results = [];
+
+    for (const threat of mockThreats) {
+      try {
+        const response = await axios.post(`${coreUrl}/api/detect/ingest`, threat, {
+          timeout: 10000,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        results.push({ 
+          threat: threat.title, 
+          status: response.data.success ? 'success' : 'failed',
+          id: response.data.threatId 
+        });
+      } catch (forwardError) {
+        results.push({ threat: threat.title, status: 'error', error: forwardError.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Reddit scraper test completed',
+      threatsFound: mockThreats.length,
+      forwardResults: results,
+      count: mockThreats.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 

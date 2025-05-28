@@ -118,7 +118,7 @@ const initializeFirebase = (retryCount = 0) => {
   }
 };
 
-// Enhanced Firestore with single initialization
+// Enhanced Firestore with proper error handling
 const getFirestore = () => {
   try {
     if (isDemoMode) {
@@ -127,11 +127,17 @@ const getFirestore = () => {
         collection: (name) => ({
           doc: (id) => ({
             get: () => Promise.resolve({ exists: false, data: () => null }),
-            set: (data) => Promise.resolve(),
+            set: (data) => {
+              logger.info(`MOCK: Setting document in ${name}/${id}`, { data });
+              return Promise.resolve();
+            },
             update: (data) => Promise.resolve(),
             delete: () => Promise.resolve()
           }),
-          add: (data) => Promise.resolve({ id: 'mock_id' }),
+          add: (data) => {
+            logger.info(`MOCK: Adding document to ${name}`, { data });
+            return Promise.resolve({ id: 'mock_id' });
+          },
           where: () => ({
             orderBy: () => ({
               limit: () => ({
@@ -165,13 +171,10 @@ const getFirestore = () => {
     
     firestoreInstance = firebase.firestore();
     
-    // Only set settings once during initialization
-    if (!firebaseInitialized) {
-      firestoreInstance.settings({
-        ignoreUndefinedProperties: true,
-        timestampsInSnapshots: true
-      });
-    }
+    // Configure Firestore settings
+    firestoreInstance.settings({
+      ignoreUndefinedProperties: true
+    });
     
     logger.debug('Firestore instance created and configured');
     return firestoreInstance;
@@ -188,7 +191,7 @@ const getFirestore = () => {
   }
 };
 
-// Production health check with metrics
+// Enhanced connection test
 const testFirebaseConnection = async () => {
   try {
     if (isDemoMode) {
@@ -198,7 +201,6 @@ const testFirebaseConnection = async () => {
 
     logger.info('Testing Firebase Admin SDK connection...');
     
-    const firebase = initializeFirebase();
     const db = getFirestore();
     
     const startTime = Date.now();
@@ -232,10 +234,78 @@ const testFirebaseConnection = async () => {
   }
 };
 
+// Initialize sample threats in Firestore
+const initializeSampleThreats = async () => {
+  try {
+    if (isDemoMode) {
+      logger.info('Sample threats initialization skipped (demo mode)');
+      return;
+    }
+
+    const db = getFirestore();
+    logger.info('🎯 Initializing sample threats in Firestore...');
+
+    const sampleThreats = [
+      {
+        id: 'threat_001',
+        title: 'Advanced Persistent Threat Targeting Financial Infrastructure',
+        type: 'Cyber',
+        severity: 85,
+        summary: 'Sophisticated malware campaign targeting banking systems across multiple countries.',
+        regions: ['North America', 'Europe', 'Asia'],
+        sources: ['https://cisa.gov/alerts'],
+        timestamp: new Date().toISOString(),
+        status: 'active',
+        confidence: 88,
+        votes: { credible: 24, not_credible: 3 },
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 'threat_002',
+        title: 'Emerging Antimicrobial Resistance in Southeast Asia',
+        type: 'Health',
+        severity: 72,
+        summary: 'New strain of antibiotic-resistant bacteria spreading rapidly.',
+        regions: ['Southeast Asia'],
+        sources: ['https://who.int/emergencies'],
+        timestamp: new Date().toISOString(),
+        status: 'active',
+        confidence: 82,
+        votes: { credible: 18, not_credible: 1 },
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 'threat_003',
+        title: 'Critical Water Shortage Crisis in Mediterranean Basin',
+        type: 'Climate',
+        severity: 78,
+        summary: 'Unprecedented drought conditions threatening agricultural stability.',
+        regions: ['Mediterranean', 'Southern Europe'],
+        sources: ['https://climate.ec.europa.eu'],
+        timestamp: new Date().toISOString(),
+        status: 'active',
+        confidence: 91,
+        votes: { credible: 31, not_credible: 2 },
+        updatedAt: new Date().toISOString()
+      }
+    ];
+
+    for (const threat of sampleThreats) {
+      await db.collection('threats').doc(threat.id).set(threat);
+      logger.info(`✅ Added sample threat: ${threat.title}`);
+    }
+
+    logger.info('🎯 Sample threats initialization complete');
+  } catch (error) {
+    logger.error('❌ Failed to initialize sample threats:', error.message);
+  }
+};
+
 module.exports = {
   initializeFirebase,
   getFirestore,
   testFirebaseConnection,
+  initializeSampleThreats,
   admin,
   logger,
   isDemoMode: () => isDemoMode
