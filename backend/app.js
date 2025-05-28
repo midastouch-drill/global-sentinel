@@ -1,87 +1,74 @@
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { initializeFirebase } = require('./config/firebase');
 
-// Initialize Firebase first
-const { initializeSampleThreats, testFirebaseConnection } = require('./config/firebase');
+// Initialize Firebase (will handle missing env vars gracefully)
+try {
+  initializeFirebase();
+  console.log('🔥 Firebase initialization completed');
+} catch (error) {
+  console.warn('⚠️  Firebase initialization failed, continuing in demo mode:', error.message);
+}
 
 const app = express();
 
-// Enhanced CORS configuration to fix frontend connection issues
-app.use(cors({
-  origin: [
-    'http://localhost:8080',
-    'http://localhost:3000',
-    'http://127.0.0.1:8080',
-    'http://127.0.0.1:3000'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+// Enable CORS
+app.use(cors());
 
-// Handle preflight requests
-app.options('*', cors());
+// Set security HTTP headers
+app.use(helmet());
 
-app.use(express.json({ limit: '50mb' }));
+// Rate limiting middleware
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use(limiter);
+
+// Body parsing middleware
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging
+// Route imports
+const detectionRoutes = require('./routes/detection');
+const voteRoutes = require('./routes/vote');
+const simulationRoutes = require('./routes/simulation');
+const verifyRoutes = require('./routes/verify');
+
+// Logging middleware (optional)
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
   next();
 });
 
 // Routes
-app.use('/api/detect', require('./routes/detection'));
-app.use('/api/crisis', require('./routes/crisis'));
-app.use('/api/simulate', require('./routes/simulate'));
-app.use('/api/simulation', require('./routes/simulation'));
-app.use('/api/vote', require('./routes/vote'));
-app.use('/api/verify', require('./routes/verify'));
-app.use('/api/trends', require('./routes/trends'));
-app.use('/api/health', require('./routes/health'));
-app.use('/api/sigint', require('./routes/sigint'));
+app.use('/api/detect', detectionRoutes);
+app.use('/api/vote', voteRoutes);
+app.use('/api/simulate', simulationRoutes);
+app.use('/api/verify', verifyRoutes);
 
-// Health check
-app.get('/api/health', async (req, res) => {
-  const firebaseStatus = await testFirebaseConnection();
-  
+// Health check endpoint
+app.get('/health', (req, res) => {
   res.json({ 
-    status: 'healthy',
+    status: 'ok', 
     timestamp: new Date().toISOString(),
-    message: 'Global Sentinel Core API is operational',
-    firebase: firebaseStatus ? 'connected' : 'mock_mode'
-  });
-});
-
-// Initialize sample data on startup
-setTimeout(async () => {
-  console.log('🎯 Initializing sample threats...');
-  await initializeSampleThreats();
-}, 5000);
-
-// 404 handler
-app.use('/api/*', (req, res) => {
-  console.log(`❌ 404 - API endpoint not found: ${req.method} ${req.path}`);
-  res.status(404).json({ 
-    success: false,
-    error: 'API endpoint not found',
-    path: req.path,
-    method: req.method
+    version: '1.0.0'
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('❌ Unhandled error:', err);
+  console.error(err.stack);
   res.status(500).json({
     success: false,
     error: 'Internal server error',
-    message: err.message
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
 });
 
+// Export app without starting the server (server.js will handle that)
 module.exports = app;

@@ -1,22 +1,14 @@
 
 import { useMutation } from '@tanstack/react-query';
-import { sigintApi } from '../api/threats';
+import { sigintApi } from '../api/threats.ts';
 import { useToast } from '@/hooks/use-toast';
-
-interface SigintResponse {
-  data?: {
-    count?: number;
-    success?: boolean;
-    message?: string;
-  };
-}
 
 export const useSigintControls = () => {
   const { toast } = useToast();
 
   const rssScrapeMutation = useMutation({
     mutationFn: sigintApi.testRssScrape,
-    onSuccess: (data: SigintResponse) => {
+    onSuccess: (data) => {
       toast({
         title: "RSS Scraper Triggered",
         description: `Processed ${data.data?.count || 0} RSS feeds`,
@@ -33,7 +25,7 @@ export const useSigintControls = () => {
 
   const apiScrapeMutation = useMutation({
     mutationFn: sigintApi.testApiScrape,
-    onSuccess: (data: SigintResponse) => {
+    onSuccess: (data) => {
       toast({
         title: "API Scraper Triggered",
         description: `Processed ${data.data?.count || 0} API sources`,
@@ -50,7 +42,7 @@ export const useSigintControls = () => {
 
   const htmlScrapeMutation = useMutation({
     mutationFn: sigintApi.testHtmlScrape,
-    onSuccess: (data: SigintResponse) => {
+    onSuccess: (data) => {
       toast({
         title: "HTML Scraper Triggered",
         description: `Processed ${data.data?.count || 0} HTML sources`,
@@ -67,7 +59,7 @@ export const useSigintControls = () => {
 
   const redditScrapeMutation = useMutation({
     mutationFn: sigintApi.testRedditScrape,
-    onSuccess: (data: SigintResponse) => {
+    onSuccess: (data) => {
       toast({
         title: "Reddit Scraper Triggered",
         description: `Processed ${data.data?.count || 0} Reddit posts`,

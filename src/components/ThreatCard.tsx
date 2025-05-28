@@ -37,8 +37,8 @@ const ThreatCard: React.FC<ThreatCardProps> = ({ threat, priority, onSimulate })
   const handleVerify = () => {
     verifyMutation.mutate({
       threatId: threat.id,
-      claim: threat.summary,
-      userId: `user_${Date.now()}`
+      sources: ['verified-source.com'],
+      credibilityScore: 85
     });
   };
 

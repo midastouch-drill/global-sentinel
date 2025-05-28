@@ -97,11 +97,9 @@ const initializeFirebase = (retryCount = 0) => {
       retryCount
     });
 
-    // Force demo mode on connection failure
-    if (retryCount >= 2) {
-      logger.warn('🚧 Forcing demo mode due to Firebase connection issues');
-      isDemoMode = true;
-      firebaseInitialized = true;
+    // In demo mode, don't retry
+    if (isDemoMode) {
+      logger.info('Continuing in demo mode...');
       return null;
     }
 
@@ -118,7 +116,7 @@ const initializeFirebase = (retryCount = 0) => {
   }
 };
 
-// Enhanced Firestore with proper error handling
+// Enhanced Firestore with single initialization
 const getFirestore = () => {
   try {
     if (isDemoMode) {
@@ -127,35 +125,14 @@ const getFirestore = () => {
         collection: (name) => ({
           doc: (id) => ({
             get: () => Promise.resolve({ exists: false, data: () => null }),
-            set: (data) => {
-              logger.info(`MOCK: Setting document in ${name}/${id}`, { data });
-              return Promise.resolve();
-            },
+            set: (data) => Promise.resolve(),
             update: (data) => Promise.resolve(),
             delete: () => Promise.resolve()
           }),
-          add: (data) => {
-            logger.info(`MOCK: Adding document to ${name}`, { data });
-            return Promise.resolve({ id: 'mock_id' });
-          },
-          where: () => ({
-            orderBy: () => ({
-              limit: () => ({
-                get: () => Promise.resolve({ docs: [], forEach: () => {} })
-              })
-            }),
-            get: () => Promise.resolve({ docs: [], forEach: () => {} })
-          }),
-          orderBy: () => ({
-            limit: () => ({
-              get: () => Promise.resolve({ docs: [], forEach: () => {} })
-            }),
-            get: () => Promise.resolve({ docs: [], forEach: () => {} })
-          }),
-          limit: () => ({
-            get: () => Promise.resolve({ docs: [], forEach: () => {} })
-          }),
-          get: () => Promise.resolve({ docs: [], forEach: () => {} })
+          add: (data) => Promise.resolve({ id: 'mock_id' }),
+          where: () => ({ get: () => Promise.resolve({ docs: [] }) }),
+          orderBy: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }),
+          limit: () => ({ get: () => Promise.resolve({ docs: [] }) })
         })
       };
     }
@@ -171,10 +148,13 @@ const getFirestore = () => {
     
     firestoreInstance = firebase.firestore();
     
-    // Configure Firestore settings
-    firestoreInstance.settings({
-      ignoreUndefinedProperties: true
-    });
+    // Only set settings once during initialization
+    if (!firebaseInitialized) {
+      firestoreInstance.settings({
+        ignoreUndefinedProperties: true,
+        timestampsInSnapshots: true
+      });
+    }
     
     logger.debug('Firestore instance created and configured');
     return firestoreInstance;
@@ -183,15 +163,11 @@ const getFirestore = () => {
       error: error.message,
       stack: error.stack
     });
-    
-    // Fallback to demo mode
-    logger.warn('🚧 Falling back to demo mode');
-    isDemoMode = true;
-    return getFirestore(); // Recursive call with demo mode enabled
+    throw error;
   }
 };
 
-// Enhanced connection test
+// Production health check with metrics
 const testFirebaseConnection = async () => {
   try {
     if (isDemoMode) {
@@ -201,6 +177,7 @@ const testFirebaseConnection = async () => {
 
     logger.info('Testing Firebase Admin SDK connection...');
     
+    const firebase = initializeFirebase();
     const db = getFirestore();
     
     const startTime = Date.now();
@@ -234,78 +211,10 @@ const testFirebaseConnection = async () => {
   }
 };
 
-// Initialize sample threats in Firestore
-const initializeSampleThreats = async () => {
-  try {
-    if (isDemoMode) {
-      logger.info('Sample threats initialization skipped (demo mode)');
-      return;
-    }
-
-    const db = getFirestore();
-    logger.info('🎯 Initializing sample threats in Firestore...');
-
-    const sampleThreats = [
-      {
-        id: 'threat_001',
-        title: 'Advanced Persistent Threat Targeting Financial Infrastructure',
-        type: 'Cyber',
-        severity: 85,
-        summary: 'Sophisticated malware campaign targeting banking systems across multiple countries.',
-        regions: ['North America', 'Europe', 'Asia'],
-        sources: ['https://cisa.gov/alerts'],
-        timestamp: new Date().toISOString(),
-        status: 'active',
-        confidence: 88,
-        votes: { credible: 24, not_credible: 3 },
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'threat_002',
-        title: 'Emerging Antimicrobial Resistance in Southeast Asia',
-        type: 'Health',
-        severity: 72,
-        summary: 'New strain of antibiotic-resistant bacteria spreading rapidly.',
-        regions: ['Southeast Asia'],
-        sources: ['https://who.int/emergencies'],
-        timestamp: new Date().toISOString(),
-        status: 'active',
-        confidence: 82,
-        votes: { credible: 18, not_credible: 1 },
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'threat_003',
-        title: 'Critical Water Shortage Crisis in Mediterranean Basin',
-        type: 'Climate',
-        severity: 78,
-        summary: 'Unprecedented drought conditions threatening agricultural stability.',
-        regions: ['Mediterranean', 'Southern Europe'],
-        sources: ['https://climate.ec.europa.eu'],
-        timestamp: new Date().toISOString(),
-        status: 'active',
-        confidence: 91,
-        votes: { credible: 31, not_credible: 2 },
-        updatedAt: new Date().toISOString()
-      }
-    ];
-
-    for (const threat of sampleThreats) {
-      await db.collection('threats').doc(threat.id).set(threat);
-      logger.info(`✅ Added sample threat: ${threat.title}`);
-    }
-
-    logger.info('🎯 Sample threats initialization complete');
-  } catch (error) {
-    logger.error('❌ Failed to initialize sample threats:', error.message);
-  }
-};
-
 module.exports = {
   initializeFirebase,
   getFirestore,
   testFirebaseConnection,
-  initializeSampleThreats,
   admin,
   logger,
   isDemoMode: () => isDemoMode

@@ -13,22 +13,22 @@ export const threatsApi = {
     api.get(`/detect/threats?page=${page}&limit=${limit}`),
   
   getById: (id: string) => 
-    api.get(`/detect/threats/${id}`),
+    api.get(`/threats/${id}`),
   
   getTrends: () => 
-    api.get('/trends'),
+    api.get('/threats/trends'),
   
   vote: (voteData: { threatId: string; vote: 'credible' | 'not_credible'; userId?: string }) =>
     api.post('/vote', voteData),
   
-  verify: (verifyData: { threatId?: string; claim: string; userId?: string }) =>
+  verify: (verifyData: { threatId: string; sources: string[]; credibilityScore: number }) =>
     api.post('/verify', verifyData),
   
   simulate: (simulationData: { scenario: string }) =>
     api.post('/simulate', simulationData),
   
   analyze: (analysisData: { step: string; type: string }) =>
-    api.post('/crisis/analyze', analysisData),
+    api.post('/analyze', analysisData),
 
   analyzeCrisis: (analysisData: { scenario: string; analysisType: string }) =>
     api.post('/crisis/analyze', analysisData),

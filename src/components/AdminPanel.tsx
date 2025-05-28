@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSigintScraping } from '../hooks/useSigint';
+import { useSigintControls } from '../hooks/useSigint';
 import { Settings, Zap, Database, Activity, Globe, Brain, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -16,40 +16,40 @@ export const AdminPanel = () => {
   });
 
   const {
-    scrapeRss,
-    scrapeApi,
-    scrapeHtml,
-    scrapeReddit,
+    triggerRssScrape,
+    triggerApiScrape,
+    triggerHtmlScrape,
+    triggerRedditScrape,
     isLoading
-  } = useSigintScraping();
+  } = useSigintControls();
 
   const scraperControls = [
     {
       name: 'RSS Feeds',
       description: 'BBC, Reuters, Al Jazeera news feeds',
       icon: Globe,
-      action: () => scrapeRss(),
+      action: () => triggerRssScrape(),
       sources: ['BBC World', 'Reuters', 'Al Jazeera', 'Associated Press']
     },
     {
       name: 'API Sources',
       description: 'GDELT, World Bank, WHO APIs',
       icon: Database,
-      action: () => scrapeApi(),
+      action: () => triggerApiScrape(),
       sources: ['GDELT Events', 'World Bank Data', 'WHO Disease Outbreaks']
     },
     {
       name: 'HTML Scrapers',
       description: 'Government and institutional websites',
       icon: Activity,
-      action: () => scrapeHtml(),
+      action: () => triggerHtmlScrape(),
       sources: ['CDC Emergency', 'ECDC Threats', 'FEMA Alerts']
     },
     {
       name: 'Reddit Monitoring',
       description: 'Social media trend analysis',
       icon: Brain,
-      action: () => scrapeReddit(),
+      action: () => triggerRedditScrape(),
       sources: ['r/worldnews', 'r/collapse', 'r/geopolitics', 'r/cybersecurity']
     }
   ];
@@ -177,8 +177,8 @@ export const AdminPanel = () => {
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   onClick={() => {
-                    scrapeRss();
-                    scrapeApi();
+                    triggerRssScrape();
+                    triggerApiScrape();
                   }}
                   disabled={isLoading}
                   className="cyber-button"
@@ -187,8 +187,8 @@ export const AdminPanel = () => {
                 </Button>
                 <Button
                   onClick={() => {
-                    scrapeHtml();
-                    scrapeReddit();
+                    triggerHtmlScrape();
+                    triggerRedditScrape();
                   }}
                   disabled={isLoading}
                   className="cyber-button"

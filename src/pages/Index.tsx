@@ -2,15 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { EnhancedThreatDashboard } from '@/components/EnhancedThreatDashboard';
-import { LiveCrisisSimulator } from '@/components/LiveCrisisSimulator';
-import { LiveVerificationEngine } from '@/components/LiveVerificationEngine';
-import { LiveGlobalMap } from '@/components/LiveGlobalMap';
+import { CrisisSimulator } from '@/components/CrisisSimulator';
+import { InteractiveGlobalMap } from '@/components/InteractiveGlobalMap';
 import { CitizenValidator } from '@/components/CitizenValidator';
 import { TrendsDashboard } from '@/components/TrendsDashboard';
 import { AdminPanel } from '@/components/AdminPanel';
 import { AlertSystem } from '@/components/AlertSystem';
 import { MatrixBackground } from '@/components/MatrixBackground';
 import RealTimeAnalytics from '@/components/RealTimeAnalytics';
+import SimulationLab from '@/components/SimulationLab';
 import { useThreats } from '../hooks/useThreats';
 
 const Index = () => {
@@ -37,11 +37,11 @@ const Index = () => {
       case 'dashboard':
         return <EnhancedThreatDashboard />;
       case 'simulator':
-        return <LiveCrisisSimulator />;
-      case 'validator':
-        return <LiveVerificationEngine />;
+        return <SimulationLab />;
       case 'map':
-        return <LiveGlobalMap threats={threats} />;
+        return <InteractiveGlobalMap threats={threats} />;
+      case 'validator':
+        return <CitizenValidator />;
       case 'trends':
         return <RealTimeAnalytics />;
       case 'admin':
