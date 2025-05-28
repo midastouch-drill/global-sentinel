@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,8 @@ export const EnhancedThreatDashboard = () => {
     const matchesSearch = threat.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          threat.summary?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || 
-                       (typeof threat.type === 'string' && threat.type.toLowerCase() === filterType.toLowerCase());
+                       (typeof threat.type === 'string' && 
+                        threat.type.toLowerCase() === filterType.toLowerCase());
     return matchesSearch && matchesType;
   });
 
