@@ -1,24 +1,38 @@
-
 const path = require('path');
 const fs = require('fs');
+const dotenv = require('dotenv');
 
-// Load environment variables from .env file if it exists
+// Load environment variables from .env if it exists
 const envPath = path.join(__dirname, '../.env');
 if (fs.existsSync(envPath)) {
-  require('dotenv').config({ path: envPath });
+  dotenv.config({ path: envPath });
 }
 
-// Firebase configuration with fallbacks for development
+const requiredVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL'];
+
+/**
+ * Validates required Firebase environment variables
+ */
+const validateFirebaseEnv = () => {
+  const missing = requiredVars.filter(varName => !process.env[varName]?.trim());
+  return missing.length > 0 ? missing : null;
+};
+
+/**
+ * Processes multi-line private key properly
+ */
+const formatPrivateKey = (key) => key.replace(/\\n/g, '\n').trim();
+
+/**
+ * Firebase configuration provider
+ */
 const getFirebaseConfig = () => {
-  // Check if Firebase variables are set
-  const requiredVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL'];
-  const missingVars = requiredVars.filter(varName => !process.env[varName]);
-  
-  if (missingVars.length > 0) {
+  const missingVars = validateFirebaseEnv();
+
+  if (missingVars) {
     console.warn('⚠️  Missing Firebase environment variables:', missingVars.join(', '));
-    console.warn('💡 Create a .env file with your Firebase credentials to enable database features');
-    
-    // Return mock config for development
+    console.warn('💡 Firebase is running in demo mode. Set the correct values in your .env file.');
+
     return {
       projectId: 'demo-project',
       privateKey: '-----BEGIN PRIVATE KEY-----\nMOCK_KEY_FOR_DEVELOPMENT\n-----END PRIVATE KEY-----\n',
@@ -28,9 +42,9 @@ const getFirebaseConfig = () => {
   }
 
   return {
-    projectId: process.env.FIREBASE_PROJECT_ID?.trim(),
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.trim().replace(/\\n/g, '\n'),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL?.trim(),
+    projectId: process.env.FIREBASE_PROJECT_ID.trim(),
+    privateKey: formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY),
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL.trim(),
     isDemoMode: false
   };
 };
