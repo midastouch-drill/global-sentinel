@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { threatsApi } from '../api/threats';
 
-export const useThreats = (page = 1, limit = 10) => {
+export const useThreats = (page = 1, limit = 50) => {
   return useQuery({
     queryKey: ['threats', page, limit],
     queryFn: () => threatsApi.getAll(page, limit).then(res => res.data),
@@ -64,48 +64,45 @@ export const useSimulate = () => {
   });
 };
 
-// Hook for paginated threats with load more functionality
-export const usePaginatedThreats = () => {
+// Enhanced hook for paginated threats with load more functionality
+export const usePaginatedThreats = (initialLimit = 10) => {
   const [page, setPage] = useState(1);
+  const [displayLimit, setDisplayLimit] = useState(initialLimit);
   const [allThreats, setAllThreats] = useState<any[]>([]);
-  const limit = 10;
 
   const query = useQuery({
-    queryKey: ['threats', page, limit],
-    queryFn: () => threatsApi.getAll(page, limit).then(res => res.data),
+    queryKey: ['threats', 1, 50], // Always fetch 50 from backend
+    queryFn: () => threatsApi.getAll(1, 50).then(res => res.data),
     refetchInterval: 30000,
     staleTime: 10000,
   });
 
-  // Accumulate threats when loading more
+  // Update threats when data changes
   React.useEffect(() => {
     if (query.data?.threats) {
-      if (page === 1) {
-        setAllThreats(query.data.threats);
-      } else {
-        setAllThreats(prev => [...prev, ...query.data.threats]);
-      }
+      setAllThreats(query.data.threats);
     }
-  }, [query.data, page]);
+  }, [query.data]);
+
+  const displayedThreats = allThreats.slice(0, displayLimit);
+  const hasMore = displayLimit < allThreats.length;
 
   const loadMore = () => {
-    if (query.data?.hasMore) {
-      setPage(prev => prev + 1);
-    }
+    setDisplayLimit(prev => Math.min(prev + 10, allThreats.length));
   };
 
   const refresh = () => {
-    setPage(1);
-    setAllThreats([]);
+    setDisplayLimit(initialLimit);
     query.refetch();
   };
 
   return {
-    threats: allThreats,
+    threats: displayedThreats,
+    allThreats,
     isLoading: query.isLoading,
     error: query.error,
-    hasMore: query.data?.hasMore || false,
-    total: query.data?.total || 0,
+    hasMore,
+    total: allThreats.length,
     loadMore,
     refresh
   };

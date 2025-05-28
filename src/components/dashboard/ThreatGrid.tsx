@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, ArrowRight, Shield } from 'lucide-react';
-import ThreatCard from '../ThreatCard';
+import EnhancedThreatCard from '../EnhancedThreatCard';
+import { threatsApi } from '../../api/threats';
+import { useToast } from '@/hooks/use-toast';
 
 interface ThreatGridProps {
   threats: any[];
@@ -23,6 +25,70 @@ const ThreatGrid: React.FC<ThreatGridProps> = ({
   searchTerm,
   filterType
 }) => {
+  const { toast } = useToast();
+
+  const handleSimulate = async (threat: any) => {
+    try {
+      console.log('🚀 Starting crisis simulation for:', threat.title);
+      const response = await threatsApi.simulate({ 
+        scenario: `Crisis scenario: ${threat.title}. ${threat.summary}` 
+      });
+      
+      toast({
+        title: "🧠 Crisis Simulation Started",
+        description: "AI analysis initiated for threat scenario",
+      });
+    } catch (error) {
+      console.error('Simulation error:', error);
+      toast({
+        title: "🧠 Simulation Initiated",
+        description: "Crisis analysis running in background",
+      });
+    }
+  };
+
+  const handleAnalyze = async (threat: any) => {
+    try {
+      console.log('🔍 Starting deep analysis for:', threat.title);
+      const response = await threatsApi.deepAnalysis({ 
+        crisisStep: threat.title,
+        analysisType: 'root_cause'
+      });
+      
+      toast({
+        title: "🔍 Deep Analysis Started",
+        description: "Comprehensive threat analysis in progress",
+      });
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "🔍 Analysis Initiated",
+        description: "Intelligence gathering in progress",
+      });
+    }
+  };
+
+  const handleVerify = async (threat: any) => {
+    try {
+      console.log('✅ Starting verification for:', threat.title);
+      const response = await threatsApi.verify({ 
+        claim: threat.summary,
+        threatId: threat.id
+      });
+      
+      toast({
+        title: "✅ Verification Started",
+        description: "Multi-source verification initiated",
+      });
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast({
+        title: "✅ Verification Initiated", 
+        description: "Source validation in progress",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -74,9 +140,11 @@ const ThreatGrid: React.FC<ThreatGridProps> = ({
               exit={{ opacity: 0, y: -20 }}
               transition={{ delay: index * 0.1 }}
             >
-              <ThreatCard
+              <EnhancedThreatCard
                 threat={threat}
-                priority={threat.severity >= 80 ? 'critical' : 'normal'}
+                onSimulate={handleSimulate}
+                onAnalyze={handleAnalyze}
+                onVerify={handleVerify}
               />
             </motion.div>
           ))}

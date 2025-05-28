@@ -7,13 +7,23 @@ import DashboardControls from './dashboard/DashboardControls';
 import ThreatGrid from './dashboard/ThreatGrid';
 import ErrorState from './dashboard/ErrorState';
 
+interface Threat {
+  id: string;
+  title: string;
+  type: string;
+  severity: number;
+  summary: string;
+  regions?: string[];
+  timestamp: string;
+}
+
 export const EnhancedThreatDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [displayCount, setDisplayCount] = useState(10);
   const { data: threatsResponse, isLoading, error, refetch } = useThreats();
   
-  const threats = threatsResponse?.threats || [];
+  const threats: Threat[] = threatsResponse?.threats || [];
   const totalThreats = threatsResponse?.total || threats.length;
 
   // Filter threats
@@ -21,8 +31,7 @@ export const EnhancedThreatDashboard = () => {
     const matchesSearch = threat.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          threat.summary?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || 
-                       (typeof threat.type === 'string' && 
-                        threat.type.toLowerCase() === filterType.toLowerCase());
+                       threat.type?.toLowerCase() === filterType.toLowerCase();
     return matchesSearch && matchesType;
   });
 
