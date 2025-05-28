@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,9 +59,9 @@ export const EnhancedThreatDashboard = () => {
     return 'text-green-400';
   };
 
-  const criticalThreats = threats.filter(t => t.severity >= 80).length;
-  const highThreats = threats.filter(t => t.severity >= 60 && t.severity < 80).length;
-  const avgSeverity = threats.length > 0 ? Math.round(threats.reduce((sum, t) => sum + t.severity, 0) / threats.length) : 0;
+  const criticalThreats = threats.filter(t => typeof t.severity === 'number' && t.severity >= 80).length;
+  const highThreats = threats.filter(t => typeof t.severity === 'number' && t.severity >= 60 && t.severity < 80).length;
+  const avgSeverity = threats.length > 0 ? Math.round(threats.reduce((sum, t) => sum + (typeof t.severity === 'number' ? t.severity : 0), 0) / threats.length) : 0;
 
   if (error) {
     return (
