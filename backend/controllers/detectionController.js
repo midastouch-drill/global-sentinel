@@ -1,4 +1,3 @@
-
 const { getFirestore, logger, isDemoMode, initializeSampleThreats } = require('../config/firebase');
 const { v4: uuidv4 } = require('uuid');
 
@@ -105,13 +104,11 @@ class DetectionController {
 
       const db = getFirestore();
       
-      console.log('🔍 Querying Firestore for active threats...');
+      console.log('🔍 Querying Firestore for threats...');
       
-      // Try to get threats from Firestore
+      // Use a simpler query to avoid index requirements
       const snapshot = await db.collection('threats')
-        .where('status', '==', 'active')
-        .orderBy('updatedAt', 'desc')
-        .limit(30)
+        .limit(50)
         .get();
       
       const threats = [];
@@ -121,29 +118,36 @@ class DetectionController {
         
         // Retry query after initialization
         const retrySnapshot = await db.collection('threats')
-          .where('status', '==', 'active')
-          .orderBy('updatedAt', 'desc')
-          .limit(30)
+          .limit(50)
           .get();
           
         retrySnapshot.forEach(doc => {
           const data = doc.data();
-          threats.push({
-            id: doc.id,
-            ...data,
-            sources: data.sources || [data.source_url || 'https://global-intelligence.gov']
-          });
+          // Filter for active threats in code instead of query
+          if (data.status === 'active') {
+            threats.push({
+              id: doc.id,
+              ...data,
+              sources: data.sources || [data.source_url || 'https://global-intelligence.gov']
+            });
+          }
         });
       } else {
         snapshot.forEach(doc => {
           const data = doc.data();
-          threats.push({
-            id: doc.id,
-            ...data,
-            sources: data.sources || [data.source_url || 'https://global-intelligence.gov']
-          });
+          // Filter for active threats in code instead of query
+          if (data.status === 'active') {
+            threats.push({
+              id: doc.id,
+              ...data,
+              sources: data.sources || [data.source_url || 'https://global-intelligence.gov']
+            });
+          }
         });
       }
+      
+      // Sort by updatedAt in code
+      threats.sort((a, b) => new Date(b.updatedAt || b.timestamp) - new Date(a.updatedAt || a.timestamp));
       
       // Update cache
       threatCache = threats.length > 0 ? threats : DetectionController.getMockThreats();

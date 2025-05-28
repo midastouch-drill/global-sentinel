@@ -1,6 +1,6 @@
-
 const { getFirestore } = require('../config/firebase');
 const logger = require('../utils/logger');
+const axios = require('axios');
 
 // Import scrapers
 const rssScraper = require('../scrapers/rssScraper');
@@ -17,6 +17,7 @@ class SmartScrapingService {
     this.maxThreats = 30;
     this.lastScrapeTime = null;
     this.isRunning = false;
+    this.coreBackendUrl = process.env.CORE_BACKEND_URL || 'http://localhost:5000';
   }
 
   async runIntelligentScrape() {
@@ -51,11 +52,12 @@ class SmartScrapingService {
       // Smart filtering and rotation
       const selectedThreats = this.selectBestThreats(allThreats);
       
-      // Overwrite existing threat slots in Firestore
+      // Forward threats to core backend AND store in Firestore
+      await this.forwardThreatsToCore(selectedThreats);
       await this.overwriteFirestoreThreats(selectedThreats);
 
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      logger.info(`✅ Smart scrape completed: ${selectedThreats.length} threats stored in ${duration}s`);
+      logger.info(`✅ Smart scrape completed: ${selectedThreats.length} threats processed in ${duration}s`);
       this.lastScrapeTime = new Date().toISOString();
 
     } catch (error) {
@@ -65,19 +67,73 @@ class SmartScrapingService {
     }
   }
 
+  async forwardThreatsToCore(threats) {
+    try {
+      logger.info(`📤 Forwarding ${threats.length} threats to core backend...`);
+      
+      const forwardResults = [];
+      
+      for (const threat of threats) {
+        try {
+          const response = await axios.post(`${this.coreBackendUrl}/api/detect/ingest`, threat, {
+            timeout: 10000,
+            headers: { 
+              'Content-Type': 'application/json',
+              'User-Agent': 'Global Sentinel SIGINT v1.0'
+            }
+          });
+          
+          if (response.data.success) {
+            forwardResults.push({ threat: threat.title, status: 'success', id: response.data.threatId });
+            logger.info(`✅ Forwarded: ${threat.title}`);
+          } else {
+            forwardResults.push({ threat: threat.title, status: 'failed', error: response.data.error });
+            logger.warn(`❌ Failed to forward: ${threat.title}`);
+          }
+        } catch (forwardError) {
+          logger.error(`❌ Forward error for ${threat.title}: ${forwardError.message}`);
+          forwardResults.push({ threat: threat.title, status: 'error', error: forwardError.message });
+        }
+      }
+      
+      const successCount = forwardResults.filter(r => r.status === 'success').length;
+      logger.info(`📤 Forwarding complete: ${successCount}/${threats.length} threats successfully sent to core backend`);
+      
+    } catch (error) {
+      logger.error(`❌ Threat forwarding failed: ${error.message}`);
+    }
+  }
+
   formatThreats(rawThreats, sourceType) {
     return rawThreats.map(threat => ({
       title: threat.title || 'Unknown Threat',
+      type: this.mapToValidType(threat.type || sourceType),
       summary: threat.summary || threat.description || 'No summary available',
+      severity: threat.severity || this.calculateSeverity(threat),
+      sources: threat.sources || [threat.url || `${sourceType}-intelligence`],
       source_url: threat.url || threat.source || `${sourceType}-intelligence`,
       timestamp: new Date().toISOString(),
       location: this.extractLocation(threat.summary || ''),
       tags: this.extractTags(threat),
       signal_type: threat.type || sourceType,
-      severity: threat.severity || this.calculateSeverity(threat),
       confidence: Math.floor(Math.random() * 30) + 70,
       regions: threat.regions || [this.inferRegion(threat.summary || '')]
     }));
+  }
+
+  mapToValidType(type) {
+    const typeMapping = {
+      'RSS': 'General',
+      'API': 'Intelligence',
+      'HTML': 'News',
+      'cyber': 'Cyber',
+      'health': 'Health',
+      'climate': 'Climate',
+      'economic': 'Economic',
+      'conflict': 'Conflict'
+    };
+    
+    return typeMapping[type] || 'General';
   }
 
   selectBestThreats(allThreats) {
