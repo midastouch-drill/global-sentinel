@@ -1,119 +1,83 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from '@/components/ui/input';
 import { 
-  RefreshCw, 
+  Shield, 
   AlertTriangle, 
-  Brain, 
-  Zap, 
+  TrendingUp, 
   Filter,
   Search,
-  Grid,
-  List,
-  Activity,
-  Globe
+  RefreshCw,
+  Eye,
+  ArrowRight
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useThreats } from '../hooks/useThreats';
+import { useThreats } from '@/hooks/useThreats';
+import ThreatCard from './ThreatCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import EnhancedThreatCard from './EnhancedThreatCard';
-import RealTimeAnalytics from './RealTimeAnalytics';
-import SimulationLab from './SimulationLab';
 
 export const EnhancedThreatDashboard = () => {
-  const [selectedThreat, setSelectedThreat] = useState(null);
-  const [showSimulation, setShowSimulation] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('timestamp');
-  const { toast } = useToast();
-
-  const { 
-    data: threatsResponse, 
-    isLoading, 
-    refetch,
-    error 
-  } = useThreats();
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [displayCount, setDisplayCount] = useState(10);
+  const { data: threatsResponse, isLoading, error, refetch } = useThreats();
+  
   const threats = threatsResponse?.threats || [];
+  const totalThreats = threatsResponse?.total || threats.length;
 
-  const handleRefresh = async () => {
-    try {
-      await refetch();
-      toast({
-        title: "🔍 Threat Database Synchronized",
-        description: `Updated ${threats.length} active threats from global intelligence sources`,
-      });
-    } catch (error) {
-      toast({
-        title: "❌ Synchronization Failed",
-        description: "Unable to connect to Global Sentinel Core. Check backend connection.",
-        variant: "destructive",
-      });
-    }
+  // Filter threats
+  const filteredThreats = threats.filter(threat => {
+    const matchesSearch = threat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         threat.summary.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || threat.type.toLowerCase() === filterType.toLowerCase();
+    return matchesSearch && matchesType;
+  });
+
+  // Get threats to display
+  const threatsToShow = filteredThreats.slice(0, displayCount);
+  const hasMore = displayCount < filteredThreats.length;
+
+  const loadMore = () => {
+    setDisplayCount(prev => Math.min(prev + 10, filteredThreats.length));
   };
 
-  const handleSimulate = (threat: any) => {
-    setSelectedThreat(threat);
-    setShowSimulation(true);
+  const threatTypes = ['all', ...Array.from(new Set(threats.map(t => t.type)))];
+
+  const getSeverityColor = (severity: number) => {
+    if (severity >= 80) return 'text-red-400';
+    if (severity >= 60) return 'text-orange-400';
+    if (severity >= 40) return 'text-yellow-400';
+    return 'text-green-400';
   };
 
-  const handleAnalyze = (threat: any) => {
-    // Navigate to simulation lab with pre-filled threat data
-    console.log('Analyzing threat:', threat);
-  };
-
-  // Filter and sort threats
-  const filteredThreats = threats
-    .filter(threat => {
-      const matchesType = filterType === 'all' || threat.type === filterType;
-      const matchesSearch = !searchQuery || 
-        threat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        threat.summary.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesType && matchesSearch;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'timestamp') {
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-      }
-      if (sortBy === 'severity') {
-        return b.severity - a.severity;
-      }
-      return 0;
-    });
-
-  const criticalThreats = threats.filter(t => t.severity >= 80);
-  const threatTypes = ['all', 'Cyber', 'Health', 'Climate', 'Economic', 'Conflict', 'AI'];
+  const criticalThreats = threats.filter(t => t.severity >= 80).length;
+  const highThreats = threats.filter(t => t.severity >= 60 && t.severity < 80).length;
+  const avgSeverity = threats.length > 0 ? Math.round(threats.reduce((sum, t) => sum + t.severity, 0) / threats.length) : 0;
 
   if (error) {
     return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-center py-12"
-      >
-        <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4 animate-pulse" />
-        <h3 className="text-lg font-semibold text-red-400 mb-2">
-          Global Sentinel Core Disconnected
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Unable to establish secure connection to threat intelligence backend
-        </p>
-        <Button onClick={handleRefresh} className="cyber-button">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Retry Connection
-        </Button>
-      </motion.div>
+      <Card className="cyber-card">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-red-400 mb-2">Intelligence System Error</h3>
+            <p className="text-muted-foreground mb-4">Failed to connect to threat intelligence network</p>
+            <Button onClick={() => refetch()} className="cyber-button">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry Connection
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Control Panel */}
+      {/* Dashboard Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -121,229 +85,147 @@ export const EnhancedThreatDashboard = () => {
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-3xl font-bold text-cyan-400 neon-text mb-2">
-              Global Threat Detection System
-            </h2>
-            <p className="text-muted-foreground">
-              Real-time AI-powered threat analysis with community validation
-            </p>
+            <h1 className="text-3xl font-bold text-cyan-400 neon-text">Global Threat Intelligence</h1>
+            <p className="text-muted-foreground">Real-time crisis monitoring and threat assessment</p>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button 
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="cyber-button"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              {isLoading ? 'Syncing...' : 'Refresh'}
-            </Button>
-            
-            <Button 
-              onClick={() => setShowSimulation(true)}
-              className="cyber-button bg-purple-600/20 text-purple-400 border-purple-500 hover:bg-purple-600/30"
-            >
-              <Brain className="w-4 h-4 mr-2" />
-              Simulation Lab
-            </Button>
+            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-sm text-green-400 font-mono">LIVE</span>
           </div>
         </div>
 
-        {/* Real-time Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="text-center p-4 cyber-card border border-red-500/50">
-            <div className="text-3xl font-mono text-red-400 mb-1">
-              {criticalThreats.length}
-            </div>
-            <div className="text-xs text-muted-foreground">Critical</div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="text-center p-4 bg-slate-900/50 rounded-lg border border-cyan-500/30">
+            <div className="text-2xl font-mono text-red-400">{criticalThreats}</div>
+            <div className="text-sm text-muted-foreground">Critical</div>
           </div>
-          <div className="text-center p-4 cyber-card">
-            <div className="text-3xl font-mono text-orange-400 mb-1">
-              {threats.filter(t => t.severity >= 60 && t.severity < 80).length}
-            </div>
-            <div className="text-xs text-muted-foreground">High</div>
+          <div className="text-center p-4 bg-slate-900/50 rounded-lg border border-orange-500/30">
+            <div className="text-2xl font-mono text-orange-400">{highThreats}</div>
+            <div className="text-sm text-muted-foreground">High Risk</div>
           </div>
-          <div className="text-center p-4 cyber-card">
-            <div className="text-3xl font-mono text-cyan-400 mb-1">
-              {threats.length}
-            </div>
-            <div className="text-xs text-muted-foreground">Total Active</div>
+          <div className="text-center p-4 bg-slate-900/50 rounded-lg border border-cyan-500/30">
+            <div className="text-2xl font-mono text-cyan-400">{totalThreats}</div>
+            <div className="text-sm text-muted-foreground">Total Active</div>
           </div>
-          <div className="text-center p-4 cyber-card">
-            <div className="text-3xl font-mono text-green-400 mb-1">
-              {threats.filter(t => t.votes && (t.votes.credible || 0) > (t.votes.not_credible || 0)).length}
-            </div>
-            <div className="text-xs text-muted-foreground">Verified</div>
-          </div>
-          <div className="text-center p-4 cyber-card">
-            <div className="text-2xl font-mono text-cyan-400 mb-1">
-              <Activity className="w-6 h-6 inline animate-pulse" />
-            </div>
-            <div className="text-xs text-muted-foreground">System Online</div>
+          <div className="text-center p-4 bg-slate-900/50 rounded-lg border border-yellow-500/30">
+            <div className={`text-2xl font-mono ${getSeverityColor(avgSeverity)}`}>{avgSeverity}</div>
+            <div className="text-sm text-muted-foreground">Avg Severity</div>
           </div>
         </div>
 
-        {/* Filters and Controls */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Search className="w-4 h-4 text-cyan-400" />
-            <Input
-              placeholder="Search threats..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="cyber-input w-64"
-            />
+        {/* Controls */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search threats, regions, or keywords..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-slate-900/50 border-cyan-500/30 focus:border-cyan-500"
+              />
+            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-cyan-400" />
-            {threatTypes.map((type) => (
-              <Button
-                key={type}
-                onClick={() => setFilterType(type)}
-                variant={filterType === type ? "default" : "outline"}
-                size="sm"
-                className={`cyber-button ${
-                  filterType === type 
-                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500' 
-                    : ''
-                }`}
-              >
-                {type === 'all' ? 'All' : type}
-              </Button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setViewMode('grid')}
-              variant={viewMode === 'grid' ? "default" : "outline"}
-              size="sm"
-              className="cyber-button"
+          
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <select 
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="bg-slate-900/50 border border-cyan-500/30 rounded px-3 py-2 text-sm text-cyan-400"
             >
-              <Grid className="w-4 h-4" />
-            </Button>
-            <Button
-              onClick={() => setViewMode('list')}
-              variant={viewMode === 'list' ? "default" : "outline"}
-              size="sm"
-              className="cyber-button"
-            >
-              <List className="w-4 h-4" />
-            </Button>
+              {threatTypes.map(type => (
+                <option key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </option>
+              ))}
+            </select>
           </div>
+          
+          <Button 
+            onClick={() => refetch()} 
+            disabled={isLoading}
+            className="cyber-button"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
       </motion.div>
 
-      {/* Critical Alerts */}
-      <AnimatePresence>
-        {criticalThreats.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="cyber-card p-6 border-2 border-red-500/50 bg-red-500/5"
-          >
-            <div className="flex items-center space-x-2 mb-4">
-              <AlertTriangle className="w-6 h-6 text-red-400 animate-threat-pulse" />
-              <h3 className="text-xl font-semibold text-red-400">
-                {criticalThreats.length} Critical Threat{criticalThreats.length !== 1 ? 's' : ''} Detected
-              </h3>
-              <Badge className="bg-red-500/20 text-red-400 border-red-500 animate-pulse">
-                PRIORITY
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Immediate analysis and response protocols recommended for severity ≥ 80 threats
-            </p>
-            <div className={`grid gap-4 ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-              {criticalThreats.slice(0, 6).map(threat => (
-                <EnhancedThreatCard 
-                  key={threat.id} 
-                  threat={threat}
-                  onSimulate={handleSimulate}
-                  onAnalyze={handleAnalyze}
-                />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content */}
-      <Tabs defaultValue="threats" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 cyber-tabs">
-          <TabsTrigger value="threats" className="cyber-tab">
-            <Globe className="w-4 h-4 mr-2" />
-            Active Threats ({filteredThreats.length})
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="cyber-tab">
-            <Activity className="w-4 h-4 mr-2" />
-            Analytics Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="simulation" className="cyber-tab">
-            <Brain className="w-4 h-4 mr-2" />
-            Simulation Lab
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Threats Grid/List */}
-        <TabsContent value="threats" className="space-y-6">
-          <div className={`grid gap-6 ${
-            viewMode === 'grid' 
-              ? 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-              : 'grid-cols-1 max-w-4xl mx-auto'
-          }`}>
-            <AnimatePresence mode="popLayout">
-              {filteredThreats.map((threat, index) => (
-                <motion.div
-                  key={threat.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.05 }}
-                  layout
-                >
-                  <EnhancedThreatCard 
-                    threat={threat}
-                    onSimulate={handleSimulate}
-                    onAnalyze={handleAnalyze}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {filteredThreats.length === 0 && !isLoading && (
+      {/* Threat Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <AnimatePresence>
+          {threatsToShow.map((threat, index) => (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12"
+              key={threat.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ delay: index * 0.1 }}
             >
-              <Globe className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                No threats match current filters
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {searchQuery ? 
-                  `No results found for "${searchQuery}"` : 
-                  `No ${filterType} threats currently active`
-                }
-              </p>
+              <ThreatCard
+                threat={threat}
+                priority={threat.severity >= 80 ? 'critical' : 'normal'}
+              />
             </motion.div>
-          )}
-        </TabsContent>
+          ))}
+        </AnimatePresence>
+      </div>
 
-        {/* Analytics Dashboard */}
-        <TabsContent value="analytics">
-          <RealTimeAnalytics />
-        </TabsContent>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index} className="cyber-card animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-slate-700 rounded w-3/4"></div>
+                <div className="h-3 bg-slate-700 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-3 bg-slate-700 rounded"></div>
+                  <div className="h-3 bg-slate-700 rounded w-2/3"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-        {/* Simulation Lab */}
-        <TabsContent value="simulation">
-          <SimulationLab />
-        </TabsContent>
-      </Tabs>
+      {/* Load More Button */}
+      {hasMore && !isLoading && (
+        <div className="text-center">
+          <Button 
+            onClick={loadMore} 
+            variant="outline" 
+            className="cyber-button"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Load More Threats ({filteredThreats.length - displayCount} remaining)
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      )}
+
+      {/* No Results */}
+      {!isLoading && threatsToShow.length === 0 && (
+        <Card className="cyber-card">
+          <CardContent className="p-12 text-center">
+            <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-muted-foreground mb-2">
+              No Threats Found
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {searchTerm || filterType !== 'all' 
+                ? 'Try adjusting your search or filter criteria' 
+                : 'All quiet on the intelligence front'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

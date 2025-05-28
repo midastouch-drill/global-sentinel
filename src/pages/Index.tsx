@@ -4,7 +4,7 @@ import { Header } from '@/components/Header';
 import { EnhancedThreatDashboard } from '@/components/EnhancedThreatDashboard';
 import { LiveCrisisSimulator } from '@/components/LiveCrisisSimulator';
 import { LiveVerificationEngine } from '@/components/LiveVerificationEngine';
-import { InteractiveGlobalMap } from '@/components/InteractiveGlobalMap';
+import { LiveGlobalMap } from '@/components/LiveGlobalMap';
 import { CitizenValidator } from '@/components/CitizenValidator';
 import { TrendsDashboard } from '@/components/TrendsDashboard';
 import { AdminPanel } from '@/components/AdminPanel';
@@ -41,7 +41,7 @@ const Index = () => {
       case 'validator':
         return <LiveVerificationEngine />;
       case 'map':
-        return <InteractiveGlobalMap threats={threats} />;
+        return <LiveGlobalMap threats={threats} />;
       case 'trends':
         return <RealTimeAnalytics />;
       case 'admin':

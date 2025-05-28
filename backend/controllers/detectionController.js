@@ -13,27 +13,13 @@ class DetectionController {
       
       const { sources = [], analysisType = 'comprehensive' } = req.body;
       
-      // Mock threat detection for now
-      const mockThreats = [
-        {
-          id: uuidv4(),
-          title: 'AI-Detected Cyber Security Vulnerability',
-          type: 'Cyber',
-          severity: 85,
-          summary: 'Advanced persistent threat detected targeting financial infrastructure.',
-          regions: ['North America', 'Europe'],
-          sources: ['https://cisa.gov/alerts', 'https://cert.org/advisories'],
-          timestamp: new Date().toISOString(),
-          status: 'active',
-          confidence: 88,
-          votes: { credible: 15, not_credible: 2 }
-        }
-      ];
+      // Get real threats from Firestore
+      const threats = await DetectionController.getActiveThreatsData();
       
       res.json({
         success: true,
-        threats: mockThreats,
-        count: mockThreats.length,
+        threats: threats.slice(0, 10), // Return first 10 for detection
+        count: threats.length,
         message: 'Threat detection completed successfully'
       });
       
@@ -52,136 +38,116 @@ class DetectionController {
       console.log('📋 Fetching active threats for frontend');
       
       const { page = 1, limit = 10 } = req.query;
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
       
       if (isDemoMode()) {
         console.log('🎭 Demo mode: returning mock threats');
-        return res.json({
-          success: true,
-          threats: DetectionController.getMockThreats().slice(0, limit),
-          hasMore: DetectionController.getMockThreats().length > limit,
-          total: DetectionController.getMockThreats().length
-        });
-      }
-
-      // Check if we can use cache
-      const now = Date.now();
-      if (threatCache.length > 0 && lastCacheUpdate && (now - lastCacheUpdate) < CACHE_DURATION) {
-        console.log('📦 Using cached threats data');
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + parseInt(limit);
+        const mockThreats = DetectionController.getMockThreats();
+        const startIndex = (pageNum - 1) * limitNum;
+        const endIndex = startIndex + limitNum;
         
         return res.json({
           success: true,
-          threats: threatCache.slice(startIndex, endIndex),
-          hasMore: threatCache.length > endIndex,
-          total: threatCache.length,
-          cached: true
+          threats: mockThreats.slice(startIndex, endIndex),
+          hasMore: mockThreats.length > endIndex,
+          total: mockThreats.length,
+          page: pageNum
         });
       }
 
-      const db = getFirestore();
+      // Try to get fresh threats from Firestore
+      const threats = await DetectionController.getActiveThreatsData();
       
-      // Try to fetch from Firebase with retry logic
-      let threats = [];
-      let retryCount = 0;
-      const maxRetries = 2;
-      
-      while (retryCount < maxRetries) {
-        try {
-          const snapshot = await db.collection('threats')
-            .where('status', '==', 'active')
-            .orderBy('timestamp', 'desc')
-            .limit(100) // Get more for cache
-            .get();
-          
-          threats = [];
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            threats.push({
-              id: doc.id,
-              ...data,
-              sources: data.sources || ['https://global-intelligence.gov', 'https://threat-monitor.org']
-            });
-          });
-          
-          // Update cache
-          threatCache = threats;
-          lastCacheUpdate = now;
-          
-          break; // Success, exit retry loop
-          
-        } catch (firestoreError) {
-          retryCount++;
-          
-          if (firestoreError.code === 8 || firestoreError.message.includes('Quota exceeded')) {
-            console.warn(`⚠️ Firebase quota exceeded, attempt ${retryCount}/${maxRetries}`);
-            
-            if (retryCount >= maxRetries) {
-              console.log('📦 Using cached data due to quota limits');
-              
-              // If no cache, use mock data
-              if (threatCache.length === 0) {
-                threatCache = DetectionController.getMockThreats();
-                lastCacheUpdate = now;
-              }
-              
-              const startIndex = (page - 1) * limit;
-              const endIndex = startIndex + parseInt(limit);
-              
-              return res.json({
-                success: true,
-                threats: threatCache.slice(startIndex, endIndex),
-                hasMore: threatCache.length > endIndex,
-                total: threatCache.length,
-                quotaExceeded: true,
-                message: 'Using cached intelligence data due to quota limits'
-              });
-            }
-            
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          } else {
-            throw firestoreError;
-          }
-        }
-      }
-      
-      logger.info(`✅ Retrieved ${threats.length} active threats`);
-      
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + parseInt(limit);
+      // Apply pagination
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
+      const paginatedThreats = threats.slice(startIndex, endIndex);
       
       res.json({
         success: true,
-        threats: threats.slice(startIndex, endIndex),
+        threats: paginatedThreats,
         hasMore: threats.length > endIndex,
-        total: threats.length
+        total: threats.length,
+        page: pageNum,
+        cached: false
       });
       
     } catch (error) {
       console.error('❌ Failed to fetch active threats:', error);
       
-      // Final fallback to mock data
+      // Fallback to mock data
       const mockThreats = DetectionController.getMockThreats();
-      const startIndex = ((req.query.page || 1) - 1) * (req.query.limit || 10);
-      const endIndex = startIndex + parseInt(req.query.limit || 10);
+      const pageNum = parseInt(req.query.page || 1);
+      const limitNum = parseInt(req.query.limit || 10);
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
       
       res.json({
         success: true,
         threats: mockThreats.slice(startIndex, endIndex),
         hasMore: mockThreats.length > endIndex,
         total: mockThreats.length,
+        page: pageNum,
         error: true,
         message: 'Using fallback data due to backend error'
       });
     }
   }
 
+  static async getActiveThreatsData() {
+    const now = Date.now();
+    
+    // Check cache first
+    if (threatCache.length > 0 && lastCacheUpdate && (now - lastCacheUpdate) < CACHE_DURATION) {
+      console.log('📦 Using cached threats data');
+      return threatCache;
+    }
+
+    try {
+      const db = getFirestore();
+      
+      // Get all 30 rotational threat slots
+      const snapshot = await db.collection('threats')
+        .where('status', '==', 'active')
+        .orderBy('updatedAt', 'desc')
+        .limit(30)
+        .get();
+      
+      const threats = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        threats.push({
+          id: doc.id,
+          ...data,
+          sources: data.sources || [data.source_url || 'https://global-intelligence.gov']
+        });
+      });
+      
+      // Update cache
+      threatCache = threats;
+      lastCacheUpdate = now;
+      
+      logger.info(`✅ Retrieved ${threats.length} active threats from rotational slots`);
+      return threats;
+      
+    } catch (error) {
+      console.warn('⚠️ Firestore fetch failed, using cache or mock');
+      
+      if (threatCache.length > 0) {
+        return threatCache;
+      }
+      
+      // Final fallback
+      return DetectionController.getMockThreats();
+    }
+  }
+
   static async ingestThreat(req, res) {
     try {
-      console.log('📥 Ingesting threat from SIGINT scraper');
+      console.log('📥 Ingesting threat from scraper');
       
-      const { title, type, severity, summary, regions, sources } = req.body;
+      const { title, type, severity, summary, regions, sources, location, tags, signal_type } = req.body;
       
       if (!title || !type || !severity) {
         return res.status(400).json({
@@ -197,17 +163,39 @@ class DetectionController {
         severity: parseInt(severity),
         summary: summary || 'No summary provided',
         regions: regions || ['Global'],
-        sources: sources || ['SIGINT'],
+        sources: sources || ['SIGINT-Intelligence'],
+        source_url: sources?.[0] || 'https://sigint-intelligence.gov',
+        location: location || 'Global',
+        tags: tags || [type.toLowerCase()],
+        signal_type: signal_type || type,
         timestamp: new Date().toISOString(),
         status: 'active',
-        confidence: Math.floor(Math.random() * 30) + 70, // 70-100
-        votes: { credible: 0, not_credible: 0 }
+        confidence: Math.floor(Math.random() * 30) + 70,
+        votes: { credible: 0, not_credible: 0 },
+        updatedAt: new Date().toISOString()
       };
 
       if (!isDemoMode()) {
         try {
           const db = getFirestore();
-          await db.collection('threats').doc(threatData.id).set(threatData);
+          
+          // Find next available slot or overwrite oldest
+          const snapshot = await db.collection('threats')
+            .orderBy('updatedAt', 'asc')
+            .limit(1)
+            .get();
+          
+          let threatId = `threat_${String(Math.floor(Math.random() * 30) + 1).padStart(3, '0')}`;
+          
+          if (!snapshot.empty) {
+            threatId = snapshot.docs[0].id;
+          }
+          
+          await db.collection('threats').doc(threatId).set({
+            ...threatData,
+            id: threatId
+          });
+          
         } catch (firestoreError) {
           console.warn('⚠️ Firebase ingestion failed, continuing with mock response');
         }
