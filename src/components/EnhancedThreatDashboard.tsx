@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,8 +48,8 @@ export const EnhancedThreatDashboard = () => {
   // Extract unique threat types and ensure they are strings
   const uniqueTypes = Array.from(new Set(
     threats
-      .map(t => t.type)
-      .filter((type): type is string => typeof type === 'string' && type.length > 0)
+      .filter(t => typeof t.type === 'string' && t.type.length > 0)
+      .map(t => t.type as string)
   ));
   
   const threatTypes: string[] = ['all', ...uniqueTypes];
